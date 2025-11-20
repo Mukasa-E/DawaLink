@@ -1,0 +1,365 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid()) @map("_id")
+  email       String   @unique
+  name        String
+  role        UserRole
+  phone       String?
+  facility    String?  // Healthcare facility for providers
+  department  String?  // Department within facility
+  preferredFacility String? // Patient's preferred/trusted facility
+  passwordHash String
+  createdAt   DateTime @default(now())
+  
+  // Pharmacy-specific fields
+  pharmacyId  String?  // For pharmacy staff
+  address     String?  // For customers and delivery agents
+  licenseNumber String? // For pharmacies
+  
+  referralsSent      Referral[] @relation("ProviderReferrals")
+  referralsReceived  Referral[] @relation("PatientReferrals")
+  recordsAsPatient  MedicalRecord[] @relation("MedicalRecordPatient")
+  recordsAsProvider MedicalRecord[] @relation("MedicalRecordProvider")
+  authorizations     PatientAuthorization[] @relation("PatientAuthPatient")
+  providerGrants     PatientAuthorization[] @relation("PatientAuthProvider")
+  
+  // Pharmacy relations
+  ordersAsCustomer   Order[] @relation("CustomerOrders")
+  prescriptions      Prescription[]
+  deliveryAssignments DeliveryAssignment[]
+  pharmacyOwned      Pharmacy? @relation("PharmacyOwner")
+  notifications      Notification[]
+}
+
+model Referral {
+  id                 String   @id @default(uuid()) @map("_id")
+  patientId          String
+  patientName        String
+  providerId         String
+  providerName       String
+  facilityName       String
+  reason             String
+  diagnosis          String?
+  recommendations    String?
+  referringFacility  String
+  referredToFacility String
+  status             ReferralStatus @default(pending)
+  createdAt          DateTime @default(now())
+  notes              String?
+
+  patient  User @relation("PatientReferrals", fields: [patientId], references: [id])
+  provider User @relation("ProviderReferrals", fields: [providerId], references: [id])
+}
+
+model MedicalRecord {
+  id           String   @id @default(uuid()) @map("_id")
+  patientId    String
+  providerId   String
+  providerName String
+  facilityName String
+  recordType   RecordType
+  title        String
+  description  String
+  date         DateTime @default(now())
+  attachments  Json?
+  isAuthorized Boolean  @default(true)
+
+  patient  User @relation("MedicalRecordPatient", fields: [patientId], references: [id])
+  provider User @relation("MedicalRecordProvider", fields: [providerId], references: [id])
+}
+
+model PatientAuthorization {
+  id         String   @id @default(uuid()) @map("_id")
+  patientId  String
+  providerId String
+  createdAt  DateTime @default(now())
+
+  patient  User @relation("PatientAuthPatient", fields: [patientId], references: [id])
+  provider User @relation("PatientAuthProvider", fields: [providerId], references: [id])
+
+  @@unique([patientId, providerId])
+}
+
+// Audit logs for security and compliance. Records who did what and when.
+model AuditLog {
+  id         String   @id @default(uuid()) @map("_id")
+  userId     String?
+  userEmail  String?
+  userRole   String?
+  method     String
+  path       String
+  status     Int
+  resourceId String?
+  detail     Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum UserRole {
+  patient
+  healthcare_provider
+  admin
+  customer
+  pharmacy
+  delivery_agent
+}
+
+enum RecordType {
+  consultation
+  test_result
+  prescription
+  diagnosis
+  other
+}
+
+enum ReferralStatus {
+  pending
+  accepted
+  completed
+  cancelled
+}
+
+// ============ PHARMACY & MEDICINE MODELS ============
+
+model FacilityMedicine {
+  id             String   @id @default(uuid()) @map("_id")
+  facilityName   String
+  name           String
+  genericName    String?
+  category       String   // e.g., "Antibiotic", "Pain Relief"
+  manufacturer   String?
+  dosageForm     String?  // tablet, syrup, injection
+  strength       String?  // e.g., "500mg"
+  stock          Int      @default(0)
+  reorderLevel   Int      @default(10)
+  requiresPrescription Boolean @default(false)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([facilityName])
+  @@index([name])
+}
+
+model Pharmacy {
+  id            String   @id @default(uuid()) @map("_id")
+  name          String
+  ownerId       String   @unique
+  licenseNumber String   @unique
+  phone         String
+  email         String
+  address       String
+  city          String
+  operatingHours Json?   // { open: "08:00", close: "20:00" }
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  
+  owner         User @relation("PharmacyOwner", fields: [ownerId], references: [id])
+  medicines     Medicine[]
+  orders        Order[]
+}
+
+model Medicine {
+  id             String   @id @default(uuid()) @map("_id")
+  pharmacyId     String
+  name           String
+  genericName    String?
+  category       String   // e.g., "Antibiotic", "Pain Relief"
+  manufacturer   String?
+  description    String?
+  dosageForm     String?  // tablet, syrup, injection
+  strength       String?  // e.g., "500mg"
+  price          Float
+  stock          Int      @default(0)
+  requiresPrescription Boolean @default(false)
+  imageUrl       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  pharmacy       Pharmacy @relation(fields: [pharmacyId], references: [id])
+  orderItems     OrderItem[]
+  
+  @@index([pharmacyId])
+  @@index([name])
+}
+
+model Order {
+  id             String      @id @default(uuid()) @map("_id")
+  customerId     String
+  pharmacyId     String
+  orderNumber    String      @unique
+  status         OrderStatus @default(pending)
+  totalAmount    Float
+  deliveryFee    Float       @default(0)
+  paymentMethod  String?     // mobile_money, card, cash
+  paymentStatus  PaymentStatus @default(pending)
+  deliveryAddress String
+  deliveryPhone  String
+  prescriptionId String?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  
+  customer       User @relation("CustomerOrders", fields: [customerId], references: [id])
+  pharmacy       Pharmacy @relation(fields: [pharmacyId], references: [id])
+  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
+  items          OrderItem[]
+  payment        Payment?
+  delivery       DeliveryAssignment?
+  notifications  Notification[]
+  
+  @@index([customerId])
+  @@index([pharmacyId])
+  @@index([status])
+}
+
+model OrderItem {
+  id         String   @id @default(uuid()) @map("_id")
+  orderId    String
+  medicineId String
+  quantity   Int
+  unitPrice  Float
+  subtotal   Float
+  
+  order      Order @relation(fields: [orderId], references: [id])
+  medicine   Medicine @relation(fields: [medicineId], references: [id])
+  
+  @@index([orderId])
+}
+
+model Prescription {
+  id             String   @id @default(uuid()) @map("_id")
+  customerId     String
+  doctorName     String
+  issueDate      DateTime
+  expiryDate     DateTime?
+  imageUrl       String   // Uploaded prescription image
+  notes          String?
+  isVerified     Boolean  @default(false)
+  verifiedBy     String?
+  verifiedAt     DateTime?
+  createdAt      DateTime @default(now())
+  
+  customer       User @relation(fields: [customerId], references: [id])
+  orders         Order[]
+  
+  @@index([customerId])
+}
+
+model DeliveryAssignment {
+  id             String         @id @default(uuid()) @map("_id")
+  orderId        String         @unique
+  deliveryAgentId String?
+  status         DeliveryStatus @default(pending)
+  pickupTime     DateTime?
+  deliveryTime   DateTime?
+  latitude       Float?
+  longitude      Float?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  order          Order @relation(fields: [orderId], references: [id])
+  deliveryAgent  User? @relation(fields: [deliveryAgentId], references: [id])
+  
+  @@index([deliveryAgentId])
+  @@index([status])
+}
+
+model Payment {
+  id              String        @id @default(uuid()) @map("_id")
+  orderId         String        @unique
+  amount          Float
+  method          PaymentMethod
+  status          PaymentStatus @default(pending)
+  transactionId   String?       // External payment gateway ID
+  mobileNumber    String?       // For mobile money
+  cardLast4       String?       // For card payments
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  order           Order @relation(fields: [orderId], references: [id])
+  
+  @@index([status])
+}
+
+model Notification {
+  id         String           @id @default(uuid()) @map("_id")
+  userId     String
+  orderId    String?
+  type       NotificationType
+  channel    NotificationChannel
+  title      String
+  message    String
+  isRead     Boolean          @default(false)
+  sentAt     DateTime?
+  createdAt  DateTime         @default(now())
+  
+  user       User @relation(fields: [userId], references: [id])
+  order      Order? @relation(fields: [orderId], references: [id])
+  
+  @@index([userId])
+  @@index([isRead])
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  ready_for_pickup
+  out_for_delivery
+  delivered
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  completed
+  failed
+  refunded
+}
+
+enum PaymentMethod {
+  mobile_money
+  card
+  cash_on_delivery
+}
+
+enum DeliveryStatus {
+  pending
+  assigned
+  picked_up
+  in_transit
+  delivered
+  failed
+}
+
+enum NotificationType {
+  order_confirmed
+  order_preparing
+  order_ready
+  order_delivered
+  payment_received
+  prescription_verified
+  delivery_assigned
+}
+
+enum NotificationChannel {
+  email
+  sms
+  push
+  in_app
+}
+

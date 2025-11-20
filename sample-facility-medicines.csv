@@ -1,0 +1,163 @@
+name,Generic Name,Category,Manufacturer,Dosage Form,Strength,Stock,Reorder Level,Requires Prescription,Notes
+Paracetamol,Acetaminophen,Analgesic,Generic Pharma,Tablet,500mg,500,100,false,Common pain reliever and fever reducer
+Ibuprofen,Ibuprofen,NSAID,Reckitt Benckiser,Tablet,400mg,300,75,false,Anti-inflammatory and pain relief
+Aspirin,Acetylsalicylic Acid,Analgesic,Bayer,Tablet,75mg,200,50,false,Blood thinner and pain relief
+Diclofenac,Diclofenac Sodium,NSAID,Novartis,Tablet,50mg,150,40,true,Strong anti-inflammatory
+Tramadol,Tramadol HCl,Opioid Analgesic,Grünenthal,Capsule,50mg,80,20,true,Moderate to severe pain
+Morphine,Morphine Sulfate,Opioid Analgesic,Purdue Pharma,Injection,10mg/ml,30,10,true,Severe pain management
+Amoxicillin,Amoxicillin,Antibiotic,GlaxoSmithKline,Capsule,250mg,400,100,true,Broad spectrum antibiotic
+Amoxicillin,Amoxicillin,Antibiotic,GlaxoSmithKline,Capsule,500mg,350,80,true,Higher dose broad spectrum
+Augmentin,Amoxicillin/Clavulanate,Antibiotic,GlaxoSmithKline,Tablet,625mg,200,50,true,Enhanced antibiotic
+Ciprofloxacin,Ciprofloxacin,Antibiotic,Bayer,Tablet,500mg,250,60,true,Fluoroquinolone antibiotic
+Azithromycin,Azithromycin,Antibiotic,Pfizer,Tablet,500mg,180,45,true,Macrolide antibiotic
+Ceftriaxone,Ceftriaxone,Antibiotic,Roche,Injection,1g,120,30,true,Injectable cephalosporin
+Metronidazole,Metronidazole,Antibiotic,Sanofi,Tablet,400mg,200,50,true,Anaerobic bacteria treatment
+Doxycycline,Doxycycline,Antibiotic,Pfizer,Capsule,100mg,150,40,true,Tetracycline antibiotic
+Erythromycin,Erythromycin,Antibiotic,Abbott,Tablet,250mg,100,25,true,Macrolide antibiotic
+Gentamicin,Gentamicin,Antibiotic,Sandoz,Injection,80mg/2ml,80,20,true,Aminoglycoside antibiotic
+Penicillin,Benzylpenicillin,Antibiotic,Sandoz,Injection,5MU,100,25,true,Beta-lactam antibiotic
+Fluconazole,Fluconazole,Antifungal,Pfizer,Capsule,150mg,120,30,true,Fungal infection treatment
+Nystatin,Nystatin,Antifungal,Bristol-Myers Squibb,Suspension,100000U/ml,60,15,false,Oral thrush treatment
+Metformin,Metformin,Antidiabetic,Merck,Tablet,500mg,600,150,true,Type 2 diabetes first-line
+Metformin,Metformin,Antidiabetic,Merck,Tablet,850mg,400,100,true,Higher dose diabetes control
+Glibenclamide,Glibenclamide,Antidiabetic,Sanofi,Tablet,5mg,300,75,true,Sulfonylurea for diabetes
+Insulin Actrapid,Insulin Human,Antidiabetic,Novo Nordisk,Injection,100IU/ml,150,40,true,Short-acting insulin
+Insulin Mixtard,Insulin Human,Antidiabetic,Novo Nordisk,Injection,100IU/ml,120,30,true,Mixed insulin
+Insulin Glargine,Insulin Glargine,Antidiabetic,Sanofi,Injection,100IU/ml,80,20,true,Long-acting insulin
+Amlodipine,Amlodipine,Antihypertensive,Pfizer,Tablet,5mg,500,125,true,Calcium channel blocker
+Amlodipine,Amlodipine,Antihypertensive,Pfizer,Tablet,10mg,350,90,true,Higher dose CCB
+Enalapril,Enalapril,Antihypertensive,Merck,Tablet,5mg,300,75,true,ACE inhibitor
+Losartan,Losartan,Antihypertensive,Merck,Tablet,50mg,280,70,true,ARB for hypertension
+Hydrochlorothiazide,HCTZ,Diuretic,Merck,Tablet,25mg,400,100,true,Thiazide diuretic
+Furosemide,Furosemide,Diuretic,Sanofi,Tablet,40mg,250,60,true,Loop diuretic
+Spironolactone,Spironolactone,Diuretic,Pfizer,Tablet,25mg,150,40,true,Potassium-sparing diuretic
+Atorvastatin,Atorvastatin,Statin,Pfizer,Tablet,20mg,300,75,true,Cholesterol management
+Simvastatin,Simvastatin,Statin,Merck,Tablet,20mg,250,60,true,HMG-CoA reductase inhibitor
+Omeprazole,Omeprazole,PPI,AstraZeneca,Capsule,20mg,400,100,false,Acid reflux treatment
+Ranitidine,Ranitidine,H2 Blocker,GlaxoSmithKline,Tablet,150mg,200,50,false,Antacid medication
+Hyoscine,Hyoscine Butylbromide,Antispasmodic,Boehringer Ingelheim,Tablet,10mg,180,45,false,Abdominal cramps
+Mebendazole,Mebendazole,Anthelmintic,Janssen,Tablet,100mg,300,75,false,Deworming medication
+Albendazole,Albendazole,Anthelmintic,GlaxoSmithKline,Tablet,400mg,250,60,false,Broad spectrum dewormer
+Praziquantel,Praziquantel,Anthelmintic,Bayer,Tablet,600mg,120,30,true,Schistosomiasis treatment
+Artemether-Lumefantrine,AL,Antimalarial,Novartis,Tablet,20/120mg,500,125,true,First-line malaria treatment
+Artesunate,Artesunate,Antimalarial,Guilin,Injection,60mg,100,25,true,Severe malaria
+Quinine,Quinine Sulfate,Antimalarial,Sanofi,Tablet,300mg,200,50,true,Malaria treatment
+SP,Sulfadoxine-Pyrimethamine,Antimalarial,Roche,Tablet,500/25mg,300,75,true,Malaria prevention
+Chloroquine,Chloroquine,Antimalarial,Sanofi,Tablet,250mg,150,40,true,Malaria prophylaxis
+Nevirapine,Nevirapine,Antiretroviral,Boehringer Ingelheim,Tablet,200mg,400,100,true,HIV treatment NNRTI
+Lamivudine,Lamivudine,Antiretroviral,GlaxoSmithKline,Tablet,150mg,500,125,true,HIV treatment NRTI
+Zidovudine,AZT,Antiretroviral,GlaxoSmithKline,Capsule,300mg,350,90,true,HIV treatment NRTI
+Efavirenz,Efavirenz,Antiretroviral,Merck,Tablet,600mg,300,75,true,HIV treatment NNRTI
+TDF,Tenofovir,Antiretroviral,Gilead,Tablet,300mg,450,110,true,HIV treatment NRTI
+Lopinavir/Ritonavir,LPV/r,Antiretroviral,Abbott,Tablet,200/50mg,250,60,true,HIV treatment PI
+Cotrimoxazole,Sulfamethoxazole/Trimethoprim,Antibiotic,Roche,Tablet,960mg,600,150,true,Opportunistic infection prophylaxis
+Prednisolone,Prednisolone,Corticosteroid,Pfizer,Tablet,5mg,300,75,true,Anti-inflammatory steroid
+Dexamethasone,Dexamethasone,Corticosteroid,Merck,Tablet,0.5mg,200,50,true,Potent corticosteroid
+Hydrocortisone,Hydrocortisone,Corticosteroid,Pfizer,Cream,1%,150,40,false,Topical steroid
+Salbutamol,Salbutamol,Bronchodilator,GlaxoSmithKline,Inhaler,100mcg,200,50,true,Asthma relief
+Beclomethasone,Beclomethasone,Corticosteroid,GlaxoSmithKline,Inhaler,250mcg,150,40,true,Asthma controller
+Aminophylline,Aminophylline,Bronchodilator,Sanofi,Tablet,100mg,180,45,true,Bronchodilator
+Cetirizine,Cetirizine,Antihistamine,UCB,Tablet,10mg,400,100,false,Allergy relief
+Chlorpheniramine,Chlorpheniramine,Antihistamine,GlaxoSmithKline,Tablet,4mg,300,75,false,First-generation antihistamine
+Promethazine,Promethazine,Antihistamine,Sanofi,Syrup,5mg/5ml,120,30,false,Antihistamine syrup
+Diazepam,Diazepam,Benzodiazepine,Roche,Tablet,5mg,100,25,true,Anxiety and seizures
+Phenobarbital,Phenobarbital,Anticonvulsant,Sanofi,Tablet,30mg,150,40,true,Epilepsy treatment
+Carbamazepine,Carbamazepine,Anticonvulsant,Novartis,Tablet,200mg,200,50,true,Seizure control
+Phenytoin,Phenytoin,Anticonvulsant,Pfizer,Tablet,100mg,150,40,true,Epilepsy medication
+Sodium Valproate,Valproic Acid,Anticonvulsant,Sanofi,Tablet,200mg,180,45,true,Broad spectrum anticonvulsant
+Haloperidol,Haloperidol,Antipsychotic,Janssen,Tablet,5mg,80,20,true,Typical antipsychotic
+Chlorpromazine,Chlorpromazine,Antipsychotic,Sanofi,Tablet,100mg,100,25,true,Major tranquilizer
+Risperidone,Risperidone,Antipsychotic,Janssen,Tablet,2mg,120,30,true,Atypical antipsychotic
+Fluoxetine,Fluoxetine,Antidepressant,Eli Lilly,Capsule,20mg,150,40,true,SSRI antidepressant
+Amitriptyline,Amitriptyline,Antidepressant,Merck,Tablet,25mg,120,30,true,Tricyclic antidepressant
+Folic Acid,Folic Acid,Vitamin,Various,Tablet,5mg,500,125,false,Folate supplement
+Ferrous Sulfate,Iron,Mineral,Various,Tablet,200mg,400,100,false,Iron supplement for anemia
+Vitamin B Complex,B Vitamins,Vitamin,Various,Tablet,Various,300,75,false,B vitamin complex
+Calcium,Calcium Carbonate,Mineral,Various,Tablet,600mg,250,60,false,Calcium supplement
+Zinc Sulfate,Zinc,Mineral,Various,Tablet,20mg,300,75,false,Zinc supplement
+ORS,Oral Rehydration Salts,Electrolyte,WHO,Sachet,20.5g,1000,250,false,Dehydration treatment
+Multivitamin,Various,Vitamin,Various,Tablet,Various,400,100,false,Daily multivitamin
+Vitamin A,Retinol,Vitamin,Various,Capsule,200000IU,200,50,false,Vitamin A supplementation
+Vitamin C,Ascorbic Acid,Vitamin,Various,Tablet,500mg,300,75,false,Vitamin C supplement
+Vitamin D,Cholecalciferol,Vitamin,Various,Tablet,1000IU,200,50,false,Bone health
+Magnesium,Magnesium Oxide,Mineral,Various,Tablet,400mg,150,40,false,Magnesium supplement
+Benzathine Penicillin,Benzathine Penicillin G,Antibiotic,Pfizer,Injection,2.4MU,60,15,true,Long-acting penicillin
+Procaine Penicillin,Procaine Penicillin,Antibiotic,Pfizer,Injection,1.5MU,50,12,true,Intermediate penicillin
+Tetanus Toxoid,TT Vaccine,Vaccine,Serum Institute,Injection,0.5ml,100,25,true,Tetanus prevention
+Oxytocin,Oxytocin,Hormone,Ferring,Injection,10IU,80,20,true,Labor induction
+Ergometrine,Ergometrine,Uterotonic,Novartis,Injection,0.5mg,60,15,true,Postpartum hemorrhage
+Misoprostol,Misoprostol,Prostaglandin,Pfizer,Tablet,200mcg,100,25,true,Obstetric use
+Magnesium Sulfate,MgSO4,Anticonvulsant,Various,Injection,50%,80,20,true,Eclampsia treatment
+Methyldopa,Methyldopa,Antihypertensive,Merck,Tablet,250mg,150,40,true,Pregnancy hypertension
+Nifedipine,Nifedipine,Antihypertensive,Bayer,Tablet,10mg,180,45,true,CCB for hypertension
+Levonorgestrel,Levonorgestrel,Contraceptive,Bayer,Tablet,1.5mg,200,50,true,Emergency contraception
+Combined Oral Contraceptive,Ethinyl Estradiol/Levonorgestrel,Contraceptive,Bayer,Tablet,30/150mcg,300,75,true,Birth control pills
+Depo Provera,Medroxyprogesterone,Contraceptive,Pfizer,Injection,150mg,120,30,true,Injectable contraceptive
+Implant,Etonogestrel,Contraceptive,Merck,Implant,68mg,40,10,true,Long-acting contraceptive
+Condoms,Latex,Barrier Method,Various,Device,Various,2000,500,false,Male contraceptive
+Atropine,Atropine Sulfate,Anticholinergic,Various,Injection,1mg/ml,80,20,true,Emergency drug
+Adrenaline,Epinephrine,Vasopressor,Various,Injection,1mg/ml,100,25,true,Anaphylaxis treatment
+Hydralazine,Hydralazine,Antihypertensive,Novartis,Injection,20mg,60,15,true,Hypertensive emergency
+Dopamine,Dopamine,Inotrope,Various,Injection,200mg/5ml,40,10,true,Shock treatment
+Diazoxide,Diazoxide,Antihypertensive,Schering,Injection,300mg,30,8,true,Severe hypertension
+Dextrose,D5W,IV Fluid,Various,IV Solution,5%,200,50,false,Intravenous glucose
+Normal Saline,Sodium Chloride,IV Fluid,Various,IV Solution,0.9%,300,75,false,IV fluid replacement
+Ringer's Lactate,Hartmann's Solution,IV Fluid,Various,IV Solution,Various,250,60,false,Balanced IV fluid
+Heparin,Heparin Sodium,Anticoagulant,Leo Pharma,Injection,5000IU/ml,80,20,true,Blood thinner
+Warfarin,Warfarin,Anticoagulant,Bristol-Myers Squibb,Tablet,5mg,120,30,true,Oral anticoagulant
+Clopidogrel,Clopidogrel,Antiplatelet,Sanofi,Tablet,75mg,150,40,true,Platelet inhibitor
+Glyceryl Trinitrate,GTN,Antianginal,Pfizer,Tablet,0.5mg,100,25,true,Angina relief
+Isosorbide Dinitrate,ISDN,Antianginal,Schwarz Pharma,Tablet,5mg,120,30,true,Angina prevention
+Digoxin,Digoxin,Cardiac Glycoside,GlaxoSmithKline,Tablet,0.25mg,100,25,true,Heart failure
+Lidocaine,Lignocaine,Local Anesthetic,AstraZeneca,Injection,2%,120,30,true,Local anesthesia
+Bupivacaine,Bupivacaine,Local Anesthetic,AstraZeneca,Injection,0.5%,80,20,true,Spinal anesthesia
+Ketamine,Ketamine,Anesthetic,Pfizer,Injection,50mg/ml,50,12,true,Dissociative anesthetic
+Propofol,Propofol,Anesthetic,Fresenius,Injection,1%,40,10,true,IV anesthetic
+Thiopental,Thiopentone,Anesthetic,Abbott,Injection,500mg,30,8,true,Barbiturate anesthetic
+Suxamethonium,Succinylcholine,Muscle Relaxant,GlaxoSmithKline,Injection,100mg,40,10,true,Depolarizing muscle relaxant
+Vecuronium,Vecuronium,Muscle Relaxant,Organon,Injection,10mg,30,8,true,Non-depolarizing relaxant
+Paracetamol IV,Acetaminophen,Analgesic,Bristol-Myers Squibb,Infusion,1g/100ml,80,20,true,Injectable paracetamol
+Ketorolac,Ketorolac,NSAID,Roche,Injection,30mg/ml,60,15,true,Injectable NSAID
+Pethidine,Meperidine,Opioid,Sanofi,Injection,100mg/2ml,40,10,true,Opioid analgesic
+Blood,Whole Blood,Blood Product,Blood Bank,Transfusion,450ml,20,5,true,Blood transfusion
+Plasma,Fresh Frozen Plasma,Blood Product,Blood Bank,Transfusion,200ml,15,4,true,Plasma transfusion
+Platelets,Platelet Concentrate,Blood Product,Blood Bank,Transfusion,Unit,10,3,true,Platelet transfusion
+Activated Charcoal,Activated Carbon,Antidote,Various,Powder,50g,40,10,false,Poisoning treatment
+Naloxone,Naloxone,Opioid Antagonist,Hospira,Injection,0.4mg/ml,30,8,true,Opioid overdose
+Sodium Bicarbonate,NaHCO3,Alkalinizer,Various,Injection,8.4%,80,20,true,Acidosis treatment
+Calcium Gluconate,Calcium,Mineral,Various,Injection,10%,60,15,true,Hypocalcemia treatment
+Potassium Chloride,KCl,Electrolyte,Various,Injection,15%,80,20,true,Hypokalemia treatment
+Acyclovir,Acyclovir,Antiviral,GlaxoSmithKline,Tablet,400mg,120,30,true,Herpes treatment
+Acyclovir,Acyclovir,Antiviral,GlaxoSmithKline,Cream,5%,80,20,false,Topical antiviral
+Oseltamivir,Tamiflu,Antiviral,Roche,Capsule,75mg,60,15,true,Influenza treatment
+Clotrimazole,Clotrimazole,Antifungal,Bayer,Cream,1%,150,40,false,Topical antifungal
+Miconazole,Miconazole,Antifungal,Janssen,Cream,2%,120,30,false,Skin fungal infection
+Gentian Violet,Gentian Violet,Antiseptic,Various,Solution,0.5%,100,25,false,Oral thrush
+Povidone Iodine,Betadine,Antiseptic,Mundipharma,Solution,10%,200,50,false,Surgical antiseptic
+Chlorhexidine,Chlorhexidine,Antiseptic,Various,Solution,4%,150,40,false,Skin disinfectant
+Hydrogen Peroxide,H2O2,Antiseptic,Various,Solution,3%,180,45,false,Wound cleaning
+Methylated Spirit,Ethanol,Antiseptic,Various,Solution,70%,250,60,false,Skin preparation
+Surgical Spirit,Isopropyl Alcohol,Antiseptic,Various,Solution,70%,200,50,false,Antiseptic solution
+Petroleum Jelly,Vaseline,Emollient,Various,Ointment,50g,150,40,false,Skin moisturizer
+Aqueous Cream,Emollient,Moisturizer,Various,Cream,500g,120,30,false,Dry skin treatment
+Calamine Lotion,Calamine,Antipruritic,Various,Lotion,100ml,100,25,false,Itch relief
+Eye Drops,Chloramphenicol,Antibiotic,Various,Drops,0.5%,150,40,true,Eye infection
+Eye Ointment,Tetracycline,Antibiotic,Various,Ointment,1%,100,25,true,Eye infection treatment
+Ear Drops,Ciprofloxacin,Antibiotic,Various,Drops,0.3%,80,20,true,Ear infection
+Nasal Drops,Ephedrine,Decongestant,Various,Drops,0.5%,100,25,false,Nasal congestion
+Throat Lozenges,Amylmetacresol,Antiseptic,Reckitt Benckiser,Lozenge,Various,200,50,false,Sore throat relief
+Cough Syrup,Dextromethorphan,Antitussive,Various,Syrup,15mg/5ml,150,40,false,Cough suppressant
+Expectorant,Guaifenesin,Expectorant,Various,Syrup,100mg/5ml,120,30,false,Mucus relief
+Antibiotic Syrup,Amoxicillin,Antibiotic,GlaxoSmithKline,Suspension,125mg/5ml,180,45,true,Pediatric antibiotic
+Antibiotic Syrup,Amoxicillin,Antibiotic,GlaxoSmithKline,Suspension,250mg/5ml,150,40,true,Higher dose pediatric
+Paracetamol Syrup,Acetaminophen,Analgesic,Various,Syrup,120mg/5ml,300,75,false,Pediatric pain relief
+Ibuprofen Syrup,Ibuprofen,NSAID,Various,Suspension,100mg/5ml,200,50,false,Pediatric anti-inflammatory
+Albendazole Syrup,Albendazole,Anthelmintic,GlaxoSmithKline,Suspension,200mg/5ml,150,40,false,Pediatric dewormer
+Zinc Syrup,Zinc Sulfate,Mineral,Various,Syrup,10mg/5ml,180,45,false,Pediatric zinc supplement
+Multivitamin Syrup,Various,Vitamin,Various,Syrup,Various,150,40,false,Pediatric vitamins
+Gripe Water,Dill Oil,Carminative,Various,Solution,Various,120,30,false,Infant colic relief
+Antacid Suspension,Aluminum Hydroxide,Antacid,Various,Suspension,Various,150,40,false,Heartburn relief
+Lactulose,Lactulose,Laxative,Abbott,Syrup,3.3g/5ml,100,25,false,Constipation relief
+Bisacodyl,Bisacodyl,Laxative,Boehringer Ingelheim,Tablet,5mg,150,40,false,Stimulant laxative
+Senna,Sennosides,Laxative,Various,Tablet,8.6mg,120,30,false,Natural laxative
+Loperamide,Loperamide,Antidiarrheal,Janssen,Tablet,2mg,200,50,false,Diarrhea control
