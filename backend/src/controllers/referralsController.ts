@@ -463,6 +463,11 @@ export const updateReferral = async (req: Request, res: Response) => {
       if (status === 'accepted' || status === 'in_progress') {
         updateData.receivedAt = new Date();
       }
+      if (status === 'completed') {
+        updateData.completedAt = new Date();
+        // record who completed it when possible
+        if (authReq.user?.name) updateData.completedBy = authReq.user.name;
+      }
     }
 
     if (receivedBy) updateData.receivedBy = receivedBy;
