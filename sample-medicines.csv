@@ -1,0 +1,51 @@
+facilityName,name,genericName,category,manufacturer,dosageForm,strength,stock,reorderLevel,requiresPrescription,notes
+Kenyatta National Hospital,Amoxicillin,Amoxicillin,Antibiotic,GlaxoSmithKline,Capsule,500mg,500,100,TRUE,Common antibiotic for bacterial infections
+Kenyatta National Hospital,Paracetamol,Acetaminophen,Analgesic,Johnson & Johnson,Tablet,500mg,1000,200,FALSE,Pain relief and fever reducer
+Kenyatta National Hospital,Ibuprofen,Ibuprofen,NSAID,Pfizer,Tablet,400mg,750,150,FALSE,Anti-inflammatory pain reliever
+Kenyatta National Hospital,Metformin,Metformin Hydrochloride,Antidiabetic,Merck,Tablet,850mg,400,80,TRUE,Type 2 diabetes management
+Kenyatta National Hospital,Lisinopril,Lisinopril,Antihypertensive,AstraZeneca,Tablet,10mg,300,60,TRUE,Blood pressure control
+Kenyatta National Hospital,Atorvastatin,Atorvastatin Calcium,Statin,Pfizer,Tablet,20mg,250,50,TRUE,Cholesterol management
+Kenyatta National Hospital,Omeprazole,Omeprazole,Proton Pump Inhibitor,AstraZeneca,Capsule,20mg,600,120,TRUE,Acid reflux treatment
+Kenyatta National Hospital,Ciprofloxacin,Ciprofloxacin,Antibiotic,Bayer,Tablet,500mg,200,40,TRUE,Broad-spectrum antibiotic
+Kenyatta National Hospital,Salbutamol,Albuterol,Bronchodilator,GSK,Inhaler,100mcg,150,30,TRUE,Asthma relief
+Kenyatta National Hospital,Aspirin,Acetylsalicylic Acid,Antiplatelet,Bayer,Tablet,75mg,800,160,FALSE,Blood thinner and pain relief
+Aga Khan Hospital,Cetirizine,Cetirizine Hydrochloride,Antihistamine,Johnson & Johnson,Tablet,10mg,500,100,FALSE,Allergy relief
+Aga Khan Hospital,Azithromycin,Azithromycin,Antibiotic,Pfizer,Tablet,500mg,180,35,TRUE,Respiratory infections
+Aga Khan Hospital,Losartan,Losartan Potassium,Antihypertensive,Merck,Tablet,50mg,220,45,TRUE,High blood pressure
+Aga Khan Hospital,Insulin Glargine,Insulin Glargine,Insulin,Sanofi,Injection,100units/mL,80,15,TRUE,Long-acting insulin for diabetes
+Aga Khan Hospital,Warfarin,Warfarin Sodium,Anticoagulant,Bristol-Myers Squibb,Tablet,5mg,150,30,TRUE,Blood clot prevention
+Aga Khan Hospital,Metronidazole,Metronidazole,Antibiotic,Pfizer,Tablet,400mg,300,60,TRUE,Bacterial and parasitic infections
+Aga Khan Hospital,Amlodipine,Amlodipine Besylate,Calcium Channel Blocker,Pfizer,Tablet,5mg,350,70,TRUE,Hypertension treatment
+Aga Khan Hospital,Levothyroxine,Levothyroxine Sodium,Thyroid Hormone,AbbVie,Tablet,100mcg,280,55,TRUE,Hypothyroidism treatment
+Aga Khan Hospital,Simvastatin,Simvastatin,Statin,Merck,Tablet,40mg,200,40,TRUE,Lower cholesterol
+Aga Khan Hospital,Diclofenac,Diclofenac Sodium,NSAID,Novartis,Tablet,50mg,400,80,TRUE,Pain and inflammation
+Nairobi Hospital,Clopidogrel,Clopidogrel Bisulfate,Antiplatelet,Sanofi,Tablet,75mg,150,30,TRUE,Prevent blood clots
+Nairobi Hospital,Gabapentin,Gabapentin,Anticonvulsant,Pfizer,Capsule,300mg,180,35,TRUE,Nerve pain and seizures
+Nairobi Hospital,Montelukast,Montelukast Sodium,Leukotriene Inhibitor,Merck,Tablet,10mg,220,45,TRUE,Asthma and allergies
+Nairobi Hospital,Ranitidine,Ranitidine Hydrochloride,H2 Blocker,GSK,Tablet,150mg,280,55,FALSE,Heartburn and ulcers
+Nairobi Hospital,Furosemide,Furosemide,Diuretic,Sanofi,Tablet,40mg,200,40,TRUE,Fluid retention
+Nairobi Hospital,Prednisone,Prednisone,Corticosteroid,Pfizer,Tablet,5mg,160,30,TRUE,Inflammation and immune suppression
+Nairobi Hospital,Tramadol,Tramadol Hydrochloride,Opioid Analgesic,Johnson & Johnson,Capsule,50mg,120,25,TRUE,Moderate to severe pain
+Nairobi Hospital,Hydrochlorothiazide,Hydrochlorothiazide,Thiazide Diuretic,Merck,Tablet,25mg,300,60,TRUE,High blood pressure
+Nairobi Hospital,Allopurinol,Allopurinol,Xanthine Oxidase Inhibitor,GSK,Tablet,300mg,180,35,TRUE,Gout treatment
+Nairobi Hospital,Spironolactone,Spironolactone,Potassium-Sparing Diuretic,Pfizer,Tablet,25mg,140,28,TRUE,Heart failure and hypertension
+Mombasa Hospital,Enalapril,Enalapril Maleate,ACE Inhibitor,Merck,Tablet,10mg,250,50,TRUE,Blood pressure management
+Mombasa Hospital,Glibenclamide,Glibenclamide,Sulfonylurea,Sanofi,Tablet,5mg,200,40,TRUE,Type 2 diabetes
+Mombasa Hospital,Cefixime,Cefixime,Antibiotic,GSK,Capsule,400mg,150,30,TRUE,Bacterial infections
+Mombasa Hospital,Chlorpheniramine,Chlorpheniramine Maleate,Antihistamine,Johnson & Johnson,Tablet,4mg,500,100,FALSE,Allergy symptoms
+Mombasa Hospital,Vitamin D3,Cholecalciferol,Vitamin,Nature Made,Capsule,1000IU,600,120,FALSE,Bone health
+Mombasa Hospital,Folic Acid,Folic Acid,Vitamin,Solgar,Tablet,5mg,700,140,FALSE,Prenatal health and anemia
+Mombasa Hospital,Ferrous Sulfate,Ferrous Sulfate,Iron Supplement,Nature's Bounty,Tablet,325mg,450,90,FALSE,Iron deficiency anemia
+Mombasa Hospital,Multivitamin,Multivitamin Complex,Supplement,Centrum,Tablet,Various,800,160,FALSE,General health support
+Mombasa Hospital,Calcium Carbonate,Calcium Carbonate,Mineral Supplement,Tums,Tablet,500mg,650,130,FALSE,Bone health and antacid
+Mombasa Hospital,Bisoprolol,Bisoprolol Fumarate,Beta Blocker,Merck,Tablet,5mg,180,35,TRUE,Heart conditions
+Coast General Hospital,Doxycycline,Doxycycline Hyclate,Antibiotic,Pfizer,Capsule,100mg,220,45,TRUE,Infections and malaria prevention
+Coast General Hospital,Fluconazole,Fluconazole,Antifungal,Pfizer,Capsule,150mg,160,30,TRUE,Fungal infections
+Coast General Hospital,Clotrimazole,Clotrimazole,Antifungal,Bayer,Cream,1%,200,40,FALSE,Topical fungal infections
+Coast General Hospital,Nifedipine,Nifedipine,Calcium Channel Blocker,Bayer,Tablet,30mg,180,35,TRUE,Hypertension
+Coast General Hospital,Carvedilol,Carvedilol,Beta Blocker,GSK,Tablet,25mg,140,28,TRUE,Heart failure and hypertension
+Coast General Hospital,Pantoprazole,Pantoprazole Sodium,Proton Pump Inhibitor,Wyeth,Tablet,40mg,250,50,TRUE,Gastric acid reduction
+Coast General Hospital,Mebendazole,Mebendazole,Anthelmintic,Johnson & Johnson,Tablet,100mg,400,80,FALSE,Intestinal worms
+Coast General Hospital,Artemether-Lumefantrine,Artemether-Lumefantrine,Antimalarial,Novartis,Tablet,20/120mg,500,100,TRUE,Malaria treatment
+Coast General Hospital,Quinine,Quinine Sulfate,Antimalarial,Sanofi,Tablet,300mg,300,60,TRUE,Severe malaria
+Coast General Hospital,ORS Sachets,Oral Rehydration Salts,Electrolyte Solution,WHO,Powder,20.5g,1000,200,FALSE,Dehydration treatment

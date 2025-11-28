@@ -11,10 +11,9 @@ import {
   Menu,
   X,
   Globe,
-  ShoppingCart,
   Package,
-  Truck,
-  Store,
+  Building2,
+  UserCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -44,62 +43,49 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigation = [
     { name: t('dashboard.title'), path: '/dashboard', icon: LayoutDashboard },
     
+    // Facility Admin specific navigation
+    ...(user?.role === 'facility_admin'
+      ? [
+          { name: 'My Facility', path: '/my-facility', icon: Building2 },
+          { name: 'Pending Providers', path: '/pending-providers', icon: UserCheck },
+          { name: 'Facility Medicines', path: '/facility-medicines', icon: Package },
+          { name: 'Referrals Received', path: '/referrals', icon: FileText },
+          { name: 'Prescriptions', path: '/prescriptions', icon: FileText },
+          { name: 'Facility Orders', path: '/orders/facility', icon: Package },
+        ]
+      : []),
+    
+    // Find Facilities (for patients and providers, not facility admins)
+    ...(user?.role !== 'facility_admin'
+      ? [{ name: t('facilities.title', 'Find Facilities'), path: '/facilities', icon: Building2 }]
+      : []),
+    
     // Medical records navigation (for patients, providers, admin)
     ...(user?.role === 'patient' || user?.role === 'healthcare_provider' || user?.role === 'admin'
       ? [
           { name: t('referrals.title'), path: '/referrals', icon: FileText },
           { name: t('records.title'), path: '/records', icon: FileText },
+          { name: 'Prescriptions', path: '/prescriptions', icon: FileText },
         ]
       : []),
     
-    // Patient pharmacy navigation - Browse medicines and cart for patients
+    // Orders - only for patients
     ...(user?.role === 'patient'
       ? [
-          { name: 'Browse Medicines', path: '/medicines', icon: Package },
-          { name: 'Cart', path: '/cart', icon: ShoppingCart },
+          { name: 'Orders', path: '/orders', icon: Package },
         ]
       : []),
     
-    // Customer pharmacy navigation - Browse medicines and cart for customers
-    ...(user?.role === 'customer'
-      ? [
-          { name: 'Browse Medicines', path: '/medicines', icon: Package },
-          { name: 'Cart', path: '/cart', icon: ShoppingCart },
-        ]
-      : []),
-    
-    // Admin - Facility Medicines management (no cart)
-    ...(user?.role === 'admin'
+    // Facility Medicines management (for healthcare providers only)
+    ...(user?.role === 'healthcare_provider'
       ? [
           { name: 'Facility Medicines', path: '/facility-medicines', icon: Package },
-        ]
-      : []),
-    
-    // Pharmacy role navigation
-    ...(user?.role === 'pharmacy'
-      ? [
-          { name: 'Pharmacy Dashboard', path: '/pharmacy/dashboard', icon: Store },
-          { name: 'Inventory', path: '/pharmacy/inventory', icon: Package },
-          { name: 'Orders', path: '/pharmacy/orders', icon: ShoppingCart },
-        ]
-      : []),
-    
-    // Delivery agent navigation
-    ...(user?.role === 'delivery_agent'
-      ? [
-          { name: 'My Deliveries', path: '/delivery/dashboard', icon: Truck },
-          { name: 'Assignments', path: '/delivery/assignments', icon: Package },
         ]
       : []),
     
     // Provider/Admin specific
     ...(user?.role === 'healthcare_provider' || user?.role === 'admin'
       ? [{ name: t('patients.title'), path: '/patients', icon: Users }]
-      : []),
-    
-    // Healthcare provider facility medicines
-    ...(user?.role === 'healthcare_provider'
-      ? [{ name: 'Facility Medicines', path: '/facility-medicines', icon: Package }]
       : []),
     
     // Admin only

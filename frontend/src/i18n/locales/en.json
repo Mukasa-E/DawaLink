@@ -72,7 +72,7 @@
     "prescription": "Prescription",
     "diagnosis": "Diagnosis",
     "other": "Other",
-    "title": "Title",
+    "recordTitle": "Title",
     "description": "Description",
     "date": "Date",
     "provider": "Healthcare Provider",
@@ -96,6 +96,32 @@
     "totalReferrals": "Total Referrals",
     "totalRecords": "Total Records",
     "activeFacilities": "Active Facilities"
+  },
+  "facilities": {
+    "title": "Find Facilities",
+    "search": {
+      "title": "Find Healthcare Facilities",
+      "subtitle": "Search for nearby clinics, pharmacies, and hospitals",
+      "searchLabel": "Search by name, address, or city",
+      "placeholder": "Search facilities...",
+      "button": "Search",
+      "typeLabel": "Facility Type",
+      "cityLabel": "City",
+      "allTypes": "All Types",
+      "allCities": "All Cities",
+      "verifiedOnly": "Verified facilities only",
+      "loading": "Loading facilities...",
+      "results": "Found {{count}} facilities",
+      "noResults": "No facilities found",
+      "noResultsMessage": "Try adjusting your search criteria"
+    },
+    "types": {
+      "hospital": "Hospital",
+      "clinic": "Clinic",
+      "pharmacy": "Pharmacy",
+      "health_center": "Health Center"
+    },
+    "services": "Services"
   }
 }
 

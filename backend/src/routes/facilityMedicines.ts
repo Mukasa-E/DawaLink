@@ -15,13 +15,13 @@ const router = Router();
 // All routes require authentication
 router.use(authenticate);
 
-// Admin and healthcare providers can manage facility medicines
-router.post('/upload', authorize('admin', 'healthcare_provider'), uploadMedicinesCSV);
-router.post('/', authorize('admin', 'healthcare_provider'), addMedicine);
-router.get('/facilities', getAllFacilities);
-router.get('/:facilityName', getFacilityMedicines);
-router.get('/:facilityName/low-stock', authorize('admin', 'healthcare_provider'), getLowStockMedicines);
-router.patch('/:id/stock', authorize('admin', 'healthcare_provider'), updateMedicineStock);
-router.delete('/:id', authorize('admin'), deleteMedicine);
+// Only facility_admin can manage their facility medicines
+router.post('/upload', authorize(['facility_admin']), uploadMedicinesCSV);
+router.post('/', authorize(['facility_admin']), addMedicine);
+router.get('/facilities', getAllFacilities); // Public list of facilities with medicines
+router.get('/:facilityName', getFacilityMedicines); // Anyone can view medicines
+router.get('/:facilityName/low-stock', authorize(['facility_admin', 'admin']), getLowStockMedicines);
+router.patch('/:id/stock', authorize(['facility_admin']), updateMedicineStock);
+router.delete('/:id', authorize(['facility_admin', 'admin']), deleteMedicine);
 
 export default router;

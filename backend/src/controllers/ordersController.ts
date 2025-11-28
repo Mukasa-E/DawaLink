@@ -1,337 +1,265 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthRequest } from '../types';
 import prisma from '../database/db';
+import { OrderCreateSchema } from '../middleware/validation';
 
-// Create order
-export const createOrder = async (req: Request, res: Response) => {
+// Helper
+const db = prisma as any;
+
+// Create an order (patient only)
+export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
-    const authReq = req as any;
-    const customerId = authReq.user?.id;
-    const { pharmacyId, items, deliveryAddress, deliveryPhone, prescriptionId, notes } = req.body;
-    
-    if (!items || items.length === 0) {
-      return res.status(400).json({ message: 'Order must have at least one item' });
+    const user = req.user;
+    const { facilityId, items, prescriptionId, notes } = OrderCreateSchema.parse(req.body);
+
+    if (!user || user.role !== 'patient') {
+      return res.status(403).json({ message: 'Only patients can place orders' });
     }
-    
-    // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    
-    // Calculate total and validate stock
-    let totalAmount = 0;
-    const orderItemsData = [];
-    
-    for (const item of items) {
-      const medicine = await (prisma as any).medicine.findUnique({
-        where: { id: item.medicineId },
-      });
-      
-      if (!medicine) {
-        return res.status(400).json({ message: `Medicine ${item.medicineId} not found` });
-      }
-      
-      if (medicine.stock < item.quantity) {
-        return res.status(400).json({ message: `Insufficient stock for ${medicine.name}` });
-      }
-      
-      const subtotal = medicine.price * item.quantity;
-      totalAmount += subtotal;
-      
-      orderItemsData.push({
-        medicineId: item.medicineId,
-        quantity: item.quantity,
-        unitPrice: medicine.price,
-        subtotal,
-      });
+    if (!facilityId) {
+      return res.status(400).json({ message: 'facilityId is required' });
     }
-    
-    // Add delivery fee (placeholder - could be calculated based on distance)
-    const deliveryFee = 5.0;
-    totalAmount += deliveryFee;
-    
-    // Create order with items
-    const order = await (prisma as any).order.create({
-      data: {
-        customerId,
-        pharmacyId,
-        orderNumber,
-        totalAmount,
-        deliveryFee,
-        deliveryAddress,
-        deliveryPhone,
-        prescriptionId,
-        notes,
-        items: {
-          create: orderItemsData,
-        },
-      },
-      include: {
-        items: {
-          include: {
-            medicine: true,
-          },
-        },
-        pharmacy: true,
-      },
-    });
-    
-    // Reduce stock
-    for (const item of items) {
-      await (prisma as any).medicine.update({
-        where: { id: item.medicineId },
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Order must include at least one item' });
+    }
+
+    // Fetch facility
+    const facility = await db.facility.findUnique({ where: { id: facilityId } });
+    if (!facility) {
+      return res.status(404).json({ message: 'Facility not found' });
+    }
+
+    // If prescription provided, validate ownership & facility alignment
+    if (prescriptionId) {
+      const prescription = await db.prescription.findUnique({ where: { id: prescriptionId } });
+      if (!prescription) {
+        return res.status(400).json({ message: 'Prescription not found' });
+      }
+      if (prescription.patientId !== user.id) {
+        return res.status(403).json({ message: 'Prescription does not belong to this patient' });
+      }
+      if (prescription.facilityId !== facilityId) {
+        return res.status(400).json({ message: 'Prescription was issued at a different facility' });
+      }
+      if (['cancelled','revoked'].includes(prescription.status)) {
+        return res.status(400).json({ message: 'Prescription is not valid for ordering' });
+      }
+    }
+
+    // Use a transaction for atomic stock check + order creation
+    const result = await prisma.$transaction(async (tx: any) => {
+      let totalAmount = 0;
+      const orderItems: any[] = [];
+
+      for (const raw of items) {
+        const { facilityMedicineId, quantity } = raw;
+        if (!facilityMedicineId || !quantity || quantity <= 0) {
+          throw new Error('Each item requires facilityMedicineId and positive quantity');
+        }
+        const medicine = await tx.facilityMedicine.findUnique({ where: { id: facilityMedicineId } });
+        if (!medicine) {
+          throw new Error(`Medicine not found: ${facilityMedicineId}`);
+        }
+        if (medicine.facilityName !== facility.name) {
+          throw new Error(`Medicine ${medicine.name} does not belong to selected facility`);
+        }
+        if (medicine.stock < quantity) {
+          throw new Error(`Insufficient stock for ${medicine.name}`);
+        }
+        const unitPrice = medicine.price || 0;
+        const subtotal = unitPrice * quantity;
+        totalAmount += subtotal;
+        orderItems.push({ facilityMedicineId, name: medicine.name, quantity, unitPrice, subtotal });
+      }
+
+      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
+      const order = await tx.order.create({
         data: {
-          stock: {
-            decrement: item.quantity,
-          },
+          orderNumber,
+          patientId: user.id,
+          facilityId,
+          facilityName: facility.name,
+          prescriptionId: prescriptionId || null,
+          items: orderItems,
+          totalAmount,
+          notes: notes || null,
         },
       });
-    }
-    
-    // Create notification
-    await (prisma as any).notification.create({
-      data: {
-        userId: customerId,
-        orderId: order.id,
-        type: 'order_confirmed',
-        channel: 'in_app',
-        title: 'Order Confirmed',
-        message: `Your order ${orderNumber} has been confirmed and is being prepared.`,
-      },
+
+      // Decrement stock atomically within transaction
+      for (const item of orderItems) {
+        await tx.facilityMedicine.update({
+          where: { id: item.facilityMedicineId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+
+      // Create notification
+      await tx.notification.create({
+        data: {
+          userId: user.id,
+          orderId: order.id,
+          type: 'order_created',
+          title: 'Order Placed',
+          message: `Your order ${orderNumber} was placed successfully`,
+        },
+      });
+
+      return order;
     });
-    
-    res.status(201).json(order);
+
+    return res.status(201).json(result);
   } catch (error: any) {
-    console.error('Create order error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    // Differentiate validation vs server error
+    const clientErrorPrefixes = [
+      'Each item requires facilityMedicineId',
+      'Medicine not found',
+      'Medicine', // covers ownership message
+      'Insufficient stock',
+      'Prescription not found',
+      'Prescription does not belong',
+      'Prescription was issued',
+      'Prescription is not valid'
+    ];
+    const message = error.message || 'Failed to create order';
+    const isClient = clientErrorPrefixes.some(prefix => message.startsWith(prefix));
+    if (isClient) {
+      return res.status(400).json({ message });
+    }
+    console.error('Create order internal error:', error);
+    return res.status(500).json({ message: 'Failed to create order', error: message });
   }
 };
 
-// Get customer orders
-export const getCustomerOrders = async (req: Request, res: Response) => {
+// List orders for patient
+export const getMyOrders = async (req: AuthRequest, res: Response) => {
   try {
-    const authReq = req as any;
-    const customerId = authReq.user?.id;
-    
-    const orders = await (prisma as any).order.findMany({
-      where: { customerId },
-      include: {
-        pharmacy: {
-          select: { id: true, name: true, address: true, phone: true },
-        },
-        items: {
-          include: {
-            medicine: {
-              select: { id: true, name: true, imageUrl: true },
-            },
-          },
-        },
-        delivery: true,
-        payment: true,
-      },
+    const user = req.user;
+    if (!user || user.role !== 'patient') {
+      return res.status(403).json({ message: 'Only patients can view their orders' });
+    }
+    const orders = await db.order.findMany({
+      where: { patientId: user.id },
       orderBy: { createdAt: 'desc' },
     });
-    
     res.json(orders);
   } catch (error: any) {
-    console.error('Get customer orders error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Get my orders error:', error);
+    res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
   }
 };
 
-// Get pharmacy orders
-export const getPharmacyOrders = async (req: Request, res: Response) => {
+// List orders for facility (facility_admin)
+export const getFacilityOrders = async (req: AuthRequest, res: Response) => {
   try {
-    const authReq = req as any;
-    const { pharmacyId } = req.params;
-    
-    // Verify user owns this pharmacy
-    const pharmacy = await (prisma as any).pharmacy.findUnique({
-      where: { id: pharmacyId },
-    });
-    
-    if (!pharmacy || (pharmacy.ownerId !== authReq.user?.id && authReq.user?.role !== 'admin')) {
-      return res.status(403).json({ message: 'Access denied' });
+    const user = req.user;
+    if (!user || user.role !== 'facility_admin' || !user.facilityId) {
+      return res.status(403).json({ message: 'Only facility administrators can view facility orders' });
     }
-    
-    const orders = await (prisma as any).order.findMany({
-      where: { pharmacyId },
-      include: {
-        customer: {
-          select: { id: true, name: true, phone: true, email: true },
-        },
-        items: {
-          include: {
-            medicine: {
-              select: { id: true, name: true },
-            },
-          },
-        },
-        delivery: true,
-        payment: true,
-      },
+    const facility = await db.facility.findUnique({ where: { id: user.facilityId } });
+    if (!facility) {
+      return res.status(404).json({ message: 'Facility not found' });
+    }
+    const orders = await db.order.findMany({
+      where: { facilityId: facility.id },
       orderBy: { createdAt: 'desc' },
     });
-    
     res.json(orders);
   } catch (error: any) {
-    console.error('Get pharmacy orders error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Get facility orders error:', error);
+    res.status(500).json({ message: 'Failed to fetch facility orders', error: error.message });
   }
 };
 
-// Get order by ID
-export const getOrderById = async (req: Request, res: Response) => {
+// Get order by id (patient owner or facility admin or admin)
+export const getOrderById = async (req: AuthRequest, res: Response) => {
   try {
-    const authReq = req as any;
+    const user = req.user;
     const { id } = req.params;
-    
-    const order = await (prisma as any).order.findUnique({
-      where: { id },
-      include: {
-        customer: {
-          select: { id: true, name: true, phone: true, email: true },
-        },
-        pharmacy: {
-          select: { id: true, name: true, address: true, phone: true },
-        },
-        items: {
-          include: {
-            medicine: true,
-          },
-        },
-        prescription: true,
-        delivery: {
-          include: {
-            deliveryAgent: {
-              select: { id: true, name: true, phone: true },
-            },
-          },
-        },
-        payment: true,
-      },
-    });
-    
+    const order = await db.order.findUnique({ where: { id } });
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
-    // Check access
-    const pharmacy = await (prisma as any).pharmacy.findUnique({
-      where: { id: order.pharmacyId },
-    });
-    
-    const isAuthorized = 
-      authReq.user?.id === order.customerId ||
-      authReq.user?.id === pharmacy?.ownerId ||
-      authReq.user?.id === order.delivery?.deliveryAgentId ||
-      authReq.user?.role === 'admin';
-    
-    if (!isAuthorized) {
+    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+    if (!(user.role === 'admin' || order.patientId === user.id || (user.role === 'facility_admin' && user.facilityId === order.facilityId))) {
       return res.status(403).json({ message: 'Access denied' });
     }
-    
     res.json(order);
   } catch (error: any) {
     console.error('Get order error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to fetch order', error: error.message });
   }
 };
 
-// Update order status (pharmacy only)
-export const updateOrderStatus = async (req: Request, res: Response) => {
+// Update order status (facility_admin)
+export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
   try {
-    const authReq = req as any;
+    const user = req.user;
     const { id } = req.params;
     const { status } = req.body;
-    
-    const order = await (prisma as any).order.findUnique({
-      where: { id },
-      include: { pharmacy: true },
+    if (!user || user.role !== 'facility_admin' || !user.facilityId) {
+      return res.status(403).json({ message: 'Only facility administrators can update order status' });
+    }
+    const order = await db.order.findUnique({ where: { id } });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.facilityId !== user.facilityId) {
+      return res.status(403).json({ message: 'You can only manage orders for your facility' });
+    }
+    const validStatuses = ['pending','confirmed','preparing','ready_for_pickup','out_for_delivery','delivered','cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+    const updated = await db.order.update({ where: { id }, data: { status } });
+    await db.notification.create({
+      data: {
+        userId: order.patientId,
+        orderId: order.id,
+        type: status === 'delivered' ? 'order_delivered' : 'order_status_updated',
+        title: 'Order Status Updated',
+        message: `Order ${order.orderNumber} status is now ${status}`,
+      },
     });
-    
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-    
-    if (order.pharmacy.ownerId !== authReq.user?.id && authReq.user?.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
-    const updated = await (prisma as any).order.update({
-      where: { id },
-      data: { status },
-    });
-    
-    // Create notification based on status
-    const notificationMessages: any = {
-      confirmed: 'Your order has been confirmed',
-      preparing: 'Your order is being prepared',
-      ready_for_pickup: 'Your order is ready for pickup',
-      out_for_delivery: 'Your order is out for delivery',
-      delivered: 'Your order has been delivered',
-    };
-    
-    if (notificationMessages[status]) {
-      await (prisma as any).notification.create({
-        data: {
-          userId: order.customerId,
-          orderId: order.id,
-          type: status === 'delivered' ? 'order_delivered' : 'order_preparing',
-          channel: 'in_app',
-          title: 'Order Update',
-          message: notificationMessages[status],
-        },
-      });
-    }
-    
     res.json(updated);
   } catch (error: any) {
     console.error('Update order status error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to update order status', error: error.message });
   }
 };
 
-// Cancel order
-export const cancelOrder = async (req: Request, res: Response) => {
+// Cancel order (patient)
+export const cancelOrder = async (req: AuthRequest, res: Response) => {
   try {
-    const authReq = req as any;
+    const user = req.user;
     const { id } = req.params;
-    
-    const order = await (prisma as any).order.findUnique({
-      where: { id },
-      include: { items: true },
-    });
-    
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+    if (!user || user.role !== 'patient') {
+      return res.status(403).json({ message: 'Only patients can cancel their orders' });
     }
-    
-    if (order.customerId !== authReq.user?.id && authReq.user?.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
-    if (!['pending', 'confirmed'].includes(order.status)) {
+    const order = await db.order.findUnique({ where: { id } });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.patientId !== user.id) return res.status(403).json({ message: 'Access denied' });
+    if (!['pending','confirmed'].includes(order.status)) {
       return res.status(400).json({ message: 'Order cannot be cancelled at this stage' });
     }
-    
     // Restore stock
-    for (const item of order.items) {
-      await (prisma as any).medicine.update({
-        where: { id: item.medicineId },
-        data: {
-          stock: {
-            increment: item.quantity,
-          },
-        },
+    for (const item of order.items as any[]) {
+      await db.facilityMedicine.update({
+        where: { id: item.facilityMedicineId },
+        data: { stock: { increment: item.quantity } },
       });
     }
-    
-    const updated = await (prisma as any).order.update({
-      where: { id },
-      data: { status: 'cancelled' },
+    const updated = await db.order.update({ where: { id }, data: { status: 'cancelled' } });
+    await db.notification.create({
+      data: {
+        userId: user.id,
+        orderId: order.id,
+        type: 'order_cancelled',
+        title: 'Order Cancelled',
+        message: `Order ${order.orderNumber} has been cancelled`,
+      },
     });
-    
     res.json(updated);
   } catch (error: any) {
     console.error('Cancel order error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Failed to cancel order', error: error.message });
   }
 };

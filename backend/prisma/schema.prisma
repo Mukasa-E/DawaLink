@@ -13,79 +13,179 @@ model User {
   name        String
   role        UserRole
   phone       String?
-  facility    String?  // Healthcare facility for providers
-  department  String?  // Department within facility
-  preferredFacility String? // Patient's preferred/trusted facility
+  facilityId  String?  // Healthcare facility ID for providers and facility admins
+  specialization String? // Medical specialization for providers
+  licenseNumber String? // Professional license for healthcare providers
+  isApproved  Boolean  @default(true)  // Approval status for healthcare providers
+  approvalStatus ApprovalStatus @default(approved) // pending, approved, rejected
+  rejectionReason String? // Reason if rejected
+  requestedAt DateTime? // When provider requested to join facility
+  approvedAt  DateTime? // When provider was approved
+  approvedBy  String?  // ID of admin who approved
   passwordHash String
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
-  // Pharmacy-specific fields
-  pharmacyId  String?  // For pharmacy staff
-  address     String?  // For customers and delivery agents
-  licenseNumber String? // For pharmacies
-  
+  // Relations
+  facility           Facility? @relation("FacilityUsers", fields: [facilityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  facilityOwned      Facility? @relation("FacilityOwner")
   referralsSent      Referral[] @relation("ProviderReferrals")
   referralsReceived  Referral[] @relation("PatientReferrals")
-  recordsAsPatient  MedicalRecord[] @relation("MedicalRecordPatient")
-  recordsAsProvider MedicalRecord[] @relation("MedicalRecordProvider")
+  recordsAsPatient   MedicalRecord[] @relation("MedicalRecordPatient")
+  recordsAsProvider  MedicalRecord[] @relation("MedicalRecordProvider")
   authorizations     PatientAuthorization[] @relation("PatientAuthPatient")
   providerGrants     PatientAuthorization[] @relation("PatientAuthProvider")
-  
-  // Pharmacy relations
-  ordersAsCustomer   Order[] @relation("CustomerOrders")
-  prescriptions      Prescription[]
-  deliveryAssignments DeliveryAssignment[]
-  pharmacyOwned      Pharmacy? @relation("PharmacyOwner")
   notifications      Notification[]
+  prescriptionsAsPatient Prescription[] @relation("PrescriptionPatient")
+  prescriptionsAsProvider Prescription[] @relation("PrescriptionProvider")
+  orders               Order[] @relation("OrderPatient")
+  
+  @@index([facilityId])
+  @@index([role])
+}
+
+model Facility {
+  id                String   @id @default(uuid()) @map("_id")
+  name              String
+  type              FacilityType // clinic, pharmacy, hospital, health_center
+  ownerId           String   @unique
+  registrationNumber String  @unique
+  phone             String
+  email             String
+  address           String
+  city              String
+  county            String?
+  operatingHours    Json?   // { open: "08:00", close: "20:00", days: ["Mon", "Tue"] }
+  services          String[] // Array of services offered
+  isVerified        Boolean  @default(false)
+  latitude          Float?
+  longitude         Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  owner             User @relation("FacilityOwner", fields: [ownerId], references: [id])
+  users             User[] @relation("FacilityUsers")
+  referralsFrom     Referral[] @relation("ReferringFacility")
+  referralsTo       Referral[] @relation("ReceivingFacility")
+  records           MedicalRecord[]
+  prescriptions     Prescription[]
+  orders            Order[] @relation("OrderFacility")
+  
+  @@index([type])
+  @@index([city])
 }
 
 model Referral {
   id                 String   @id @default(uuid()) @map("_id")
+  referralNumber     String   @unique // Auto-generated referral number
+  qrCode             String?  // QR code data for quick access
   patientId          String
   patientName        String
+  patientAge         Int?
+  patientGender      String?
   providerId         String
   providerName       String
-  facilityName       String
+  providerSpecialization String?
+  referringFacilityId String
+  receivingFacilityId String?
+  receivingProviderId String?  // Optional: target specific provider
   reason             String
+  clinicalSummary    String   // Brief summary of patient condition
   diagnosis          String?
+  vitalSigns         Json?    // Blood pressure, temperature, etc.
+  testResults        Json?    // Any lab results or imaging
+  treatmentGiven     String?  // Treatment provided before referral
   recommendations    String?
-  referringFacility  String
-  referredToFacility String
+  urgencyLevel       UrgencyLevel @default(routine)
   status             ReferralStatus @default(pending)
+  receivedBy         String?  // Name of provider who received referral
+  receivedAt         DateTime?
+  completionNotes    String?
   createdAt          DateTime @default(now())
-  notes              String?
+  updatedAt          DateTime @updatedAt
+  expiresAt          DateTime? // Optional expiry for referral validity
 
-  patient  User @relation("PatientReferrals", fields: [patientId], references: [id])
-  provider User @relation("ProviderReferrals", fields: [providerId], references: [id])
+  patient            User @relation("PatientReferrals", fields: [patientId], references: [id])
+  provider           User @relation("ProviderReferrals", fields: [providerId], references: [id])
+  referringFacility  Facility @relation("ReferringFacility", fields: [referringFacilityId], references: [id])
+  receivingFacility  Facility? @relation("ReceivingFacility", fields: [receivingFacilityId], references: [id])
+  
+  @@index([patientId])
+  @@index([providerId])
+  @@index([status])
+  @@index([referringFacilityId])
 }
 
 model MedicalRecord {
   id           String   @id @default(uuid()) @map("_id")
+  recordNumber String   @unique // Auto-generated record number
   patientId    String
   providerId   String
   providerName String
+  facilityId   String
   facilityName String
   recordType   RecordType
   title        String
   description  String
-  date         DateTime @default(now())
-  attachments  Json?
-  isAuthorized Boolean  @default(true)
+  diagnosis    String?
+  treatment    String?
+  medications  Json?    // Array of medications prescribed
+  vitalSigns   Json?    // Blood pressure, temp, pulse, etc.
+  labResults   Json?    // Laboratory test results
+  attachments  Json?    // File URLs for scans, reports, etc.
+  visitDate    DateTime @default(now())
+  isConfidential Boolean @default(false)
+  shareableViaQR Boolean @default(false) // Can be shared via QR code
+  qrCode       String?  // QR code for quick access
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   patient  User @relation("MedicalRecordPatient", fields: [patientId], references: [id])
   provider User @relation("MedicalRecordProvider", fields: [providerId], references: [id])
+  facility Facility @relation(fields: [facilityId], references: [id])
+  
+  @@index([patientId])
+  @@index([facilityId])
+  @@index([visitDate])
 }
 
 model PatientAuthorization {
   id         String   @id @default(uuid()) @map("_id")
   patientId  String
-  providerId String
-  createdAt  DateTime @default(now())
+  providerId String?  // Specific provider access
+  facilityId String?  // Or entire facility access
+  accessLevel AccessLevel @default(view_only)
+  purpose    String?  // Reason for access
+  grantedAt  DateTime @default(now())
+  expiresAt  DateTime? // Optional expiry
+  revokedAt  DateTime?
+  isActive   Boolean  @default(true)
 
   patient  User @relation("PatientAuthPatient", fields: [patientId], references: [id])
-  provider User @relation("PatientAuthProvider", fields: [providerId], references: [id])
+  provider User? @relation("PatientAuthProvider", fields: [providerId], references: [id])
 
-  @@unique([patientId, providerId])
+  @@index([patientId])
+  @@index([providerId])
+  @@index([isActive])
+}
+
+model Notification {
+  id           String           @id @default(uuid()) @map("_id")
+  userId       String
+  referralId   String?
+  recordId     String?
+  prescriptionId String?
+  orderId      String?
+  type         NotificationType
+  title        String
+  message      String
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  
+  user         User @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([isRead])
 }
 
 // Audit logs for security and compliance. Records who did what and when.
@@ -94,24 +194,38 @@ model AuditLog {
   userId     String?
   userEmail  String?
   userRole   String?
-  method     String
-  path       String
-  status     Int
+  action     String   // e.g., "view_record", "create_referral", "grant_access"
+  resourceType String? // e.g., "medical_record", "referral"
   resourceId String?
+  facilityId String?
   detail     Json?
   ip         String?
   createdAt  DateTime @default(now())
 
   @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 enum UserRole {
   patient
   healthcare_provider
+  facility_admin
   admin
-  customer
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+enum FacilityType {
+  clinic
   pharmacy
-  delivery_agent
+  hospital
+  health_center
+  diagnostic_center
 }
 
 enum RecordType {
@@ -119,198 +233,130 @@ enum RecordType {
   test_result
   prescription
   diagnosis
+  immunization
+  surgery
+  follow_up
   other
 }
 
 enum ReferralStatus {
   pending
   accepted
+  in_progress
   completed
   cancelled
+  expired
 }
 
-// ============ PHARMACY & MEDICINE MODELS ============
+enum UrgencyLevel {
+  emergency
+  urgent
+  routine
+}
 
+enum AccessLevel {
+  view_only
+  full_access
+}
+
+enum NotificationType {
+  referral_received
+  referral_accepted
+  referral_completed
+  record_shared
+  authorization_granted
+  authorization_revoked
+  appointment_reminder
+  system_notification
+  prescription_created
+  prescription_fulfilled
+  prescription_cancelled
+  order_created
+  order_status_updated
+  order_cancelled
+  order_delivered
+}
+
+// Facility Medicines - medicines available at each facility
 model FacilityMedicine {
-  id             String   @id @default(uuid()) @map("_id")
-  facilityName   String
-  name           String
-  genericName    String?
-  category       String   // e.g., "Antibiotic", "Pain Relief"
-  manufacturer   String?
-  dosageForm     String?  // tablet, syrup, injection
-  strength       String?  // e.g., "500mg"
-  stock          Int      @default(0)
-  reorderLevel   Int      @default(10)
-  requiresPrescription Boolean @default(false)
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                    String   @id @default(uuid()) @map("_id")
+  facilityName          String   // Name of the facility
+  name                  String   // Medicine name
+  genericName           String?  // Generic/scientific name
+  category              String   @default("General") // e.g., Analgesic, Antibiotic
+  manufacturer          String?
+  dosageForm            String?  // Tablet, Syrup, Injection, etc.
+  strength              String?  // e.g., 500mg, 250mg
+  stock                 Int      @default(0) // Current stock quantity
+  reorderLevel          Int      @default(10) // Minimum stock before reorder
+  requiresPrescription  Boolean  @default(false)
+  price                 Float    @default(0) // Unit price for ordering
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
   
   @@index([facilityName])
-  @@index([name])
+  @@index([category])
+  @@unique([facilityName, name])
 }
 
-model Pharmacy {
-  id            String   @id @default(uuid()) @map("_id")
-  name          String
-  ownerId       String   @unique
-  licenseNumber String   @unique
-  phone         String
-  email         String
-  address       String
-  city          String
-  operatingHours Json?   // { open: "08:00", close: "20:00" }
-  isVerified    Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  
-  owner         User @relation("PharmacyOwner", fields: [ownerId], references: [id])
-  medicines     Medicine[]
-  orders        Order[]
+// Prescriptions issued by providers/facility admins for patients
+model Prescription {
+  id               String           @id @default(uuid()) @map("_id")
+  prescriptionNumber String         @unique
+  patientId        String
+  providerId       String
+  facilityId       String
+  facilityName     String
+  diagnosis        String?
+  notes            String?
+  medicines        Json?            // Array of medicine objects: [{ facilityMedicineId, name, dosage, frequency, duration }]
+  status           PrescriptionStatus @default(draft)
+  attachmentUrl    String?          // Placeholder for uploaded file (image/pdf)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  patient          User @relation("PrescriptionPatient", fields: [patientId], references: [id])
+  provider         User @relation("PrescriptionProvider", fields: [providerId], references: [id])
+  facility         Facility @relation(fields: [facilityId], references: [id])
+
+  @@index([patientId])
+  @@index([providerId])
+  @@index([facilityId])
+  @@index([status])
+  @@index([facilityId, status, createdAt])
 }
 
-model Medicine {
-  id             String   @id @default(uuid()) @map("_id")
-  pharmacyId     String
-  name           String
-  genericName    String?
-  category       String   // e.g., "Antibiotic", "Pain Relief"
-  manufacturer   String?
-  description    String?
-  dosageForm     String?  // tablet, syrup, injection
-  strength       String?  // e.g., "500mg"
-  price          Float
-  stock          Int      @default(0)
-  requiresPrescription Boolean @default(false)
-  imageUrl       String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  pharmacy       Pharmacy @relation(fields: [pharmacyId], references: [id])
-  orderItems     OrderItem[]
-  
-  @@index([pharmacyId])
-  @@index([name])
-}
-
+// Orders placed by patients against a facility (pharmacy) inventory
 model Order {
   id             String      @id @default(uuid()) @map("_id")
-  customerId     String
-  pharmacyId     String
   orderNumber    String      @unique
+  patientId      String
+  facilityId     String      // Facility acting as pharmacy
+  facilityName   String
+  prescriptionId String?     // Optional associated prescription
+  items          Json        // Array: [{ facilityMedicineId, name, quantity, unitPrice, subtotal }]
+  totalAmount    Float       @default(0)
   status         OrderStatus @default(pending)
-  totalAmount    Float
-  deliveryFee    Float       @default(0)
-  paymentMethod  String?     // mobile_money, card, cash
-  paymentStatus  PaymentStatus @default(pending)
-  deliveryAddress String
-  deliveryPhone  String
-  prescriptionId String?
   notes          String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-  
-  customer       User @relation("CustomerOrders", fields: [customerId], references: [id])
-  pharmacy       Pharmacy @relation(fields: [pharmacyId], references: [id])
-  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
-  items          OrderItem[]
-  payment        Payment?
-  delivery       DeliveryAssignment?
-  notifications  Notification[]
-  
-  @@index([customerId])
-  @@index([pharmacyId])
+
+  patient        User     @relation("OrderPatient", fields: [patientId], references: [id])
+  facility       Facility @relation("OrderFacility", fields: [facilityId], references: [id])
+
+  @@index([patientId])
+  @@index([facilityId])
   @@index([status])
+  @@index([facilityId, status])
 }
 
-model OrderItem {
-  id         String   @id @default(uuid()) @map("_id")
-  orderId    String
-  medicineId String
-  quantity   Int
-  unitPrice  Float
-  subtotal   Float
-  
-  order      Order @relation(fields: [orderId], references: [id])
-  medicine   Medicine @relation(fields: [medicineId], references: [id])
-  
-  @@index([orderId])
-}
-
-model Prescription {
-  id             String   @id @default(uuid()) @map("_id")
-  customerId     String
-  doctorName     String
-  issueDate      DateTime
-  expiryDate     DateTime?
-  imageUrl       String   // Uploaded prescription image
-  notes          String?
-  isVerified     Boolean  @default(false)
-  verifiedBy     String?
-  verifiedAt     DateTime?
-  createdAt      DateTime @default(now())
-  
-  customer       User @relation(fields: [customerId], references: [id])
-  orders         Order[]
-  
-  @@index([customerId])
-}
-
-model DeliveryAssignment {
-  id             String         @id @default(uuid()) @map("_id")
-  orderId        String         @unique
-  deliveryAgentId String?
-  status         DeliveryStatus @default(pending)
-  pickupTime     DateTime?
-  deliveryTime   DateTime?
-  latitude       Float?
-  longitude      Float?
-  notes          String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  
-  order          Order @relation(fields: [orderId], references: [id])
-  deliveryAgent  User? @relation(fields: [deliveryAgentId], references: [id])
-  
-  @@index([deliveryAgentId])
-  @@index([status])
-}
-
-model Payment {
-  id              String        @id @default(uuid()) @map("_id")
-  orderId         String        @unique
-  amount          Float
-  method          PaymentMethod
-  status          PaymentStatus @default(pending)
-  transactionId   String?       // External payment gateway ID
-  mobileNumber    String?       // For mobile money
-  cardLast4       String?       // For card payments
-  metadata        Json?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  
-  order           Order @relation(fields: [orderId], references: [id])
-  
-  @@index([status])
-}
-
-model Notification {
-  id         String           @id @default(uuid()) @map("_id")
-  userId     String
-  orderId    String?
-  type       NotificationType
-  channel    NotificationChannel
-  title      String
-  message    String
-  isRead     Boolean          @default(false)
-  sentAt     DateTime?
-  createdAt  DateTime         @default(now())
-  
-  user       User @relation(fields: [userId], references: [id])
-  order      Order? @relation(fields: [orderId], references: [id])
-  
-  @@index([userId])
-  @@index([isRead])
+enum PrescriptionStatus {
+  draft
+  issued
+  fulfilled
+  cancelled
+  revoked
 }
 
 enum OrderStatus {
@@ -322,44 +368,3 @@ enum OrderStatus {
   delivered
   cancelled
 }
-
-enum PaymentStatus {
-  pending
-  processing
-  completed
-  failed
-  refunded
-}
-
-enum PaymentMethod {
-  mobile_money
-  card
-  cash_on_delivery
-}
-
-enum DeliveryStatus {
-  pending
-  assigned
-  picked_up
-  in_transit
-  delivered
-  failed
-}
-
-enum NotificationType {
-  order_confirmed
-  order_preparing
-  order_ready
-  order_delivered
-  payment_received
-  prescription_verified
-  delivery_assigned
-}
-
-enum NotificationChannel {
-  email
-  sms
-  push
-  in_app
-}
-

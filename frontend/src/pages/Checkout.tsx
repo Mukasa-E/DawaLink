@@ -78,20 +78,20 @@ export default function Checkout() {
       setLoading(true);
       setError('');
 
-      // Get pharmacy ID from first item (all items should be from same pharmacy)
-      const pharmacyId = cartItems[0].medicine.pharmacyId;
+  // Treat pharmacyId as facilityId for backend order creation (temporary mapping)
+  const facilityId = cartItems[0].medicine.pharmacyId;
 
       // Prepare order items
       const items = cartItems.map(item => ({
-        medicineId: item.medicine.id,
+        facilityMedicineId: item.medicine.id, // assuming medicine.id corresponds to facility medicine
         quantity: item.quantity,
       }));
 
       // Create order
       const order = await ordersAPI.create({
-        pharmacyId,
-        deliveryAddress,
+        facilityId,
         items,
+        notes: undefined,
       });
 
       // Process payment

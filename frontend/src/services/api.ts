@@ -1,11 +1,12 @@
 import axios from 'axios';
-import type { 
+import { 
   User, 
   Referral, 
   MedicalRecord, 
   RegisterData,
   Medicine,
   FacilityMedicine,
+  Facility,
   Pharmacy,
   Order,
   Payment,
@@ -109,6 +110,16 @@ export const recordsAPI = {
 
 // Patients API
 export const patientsAPI = {
+  getMyPatients: async (): Promise<any[]> => {
+    const response = await api.get('/patients/my-patients');
+    return response.data;
+  },
+
+  getProvidersByFacility: async (facilityId: string): Promise<any[]> => {
+    const response = await api.get(`/patients/providers/${facilityId}`);
+    return response.data;
+  },
+
   search: async (query: string): Promise<User[]> => {
     const response = await api.get(`/patients/search?q=${encodeURIComponent(query)}`);
     return response.data;
@@ -128,6 +139,63 @@ export const patientsAPI = {
   },
 };
 
+// Facilities API
+export const facilitiesAPI = {
+  getAll: async (params?: {
+    type?: string;
+    city?: string;
+    verified?: boolean;
+    search?: string;
+  }): Promise<Facility[]> => {
+    const queryParams = new URLSearchParams();
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.city) queryParams.append('city', params.city);
+    if (params?.verified !== undefined) queryParams.append('verified', String(params.verified));
+    if (params?.search) queryParams.append('search', params.search);
+    
+    const url = `/facilities${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await api.get(url);
+    return response.data;
+  },
+  
+  getById: async (id: string): Promise<Facility> => {
+    const response = await api.get(`/facilities/${id}`);
+    return response.data;
+  },
+  
+  register: async (data: Partial<Facility>): Promise<Facility> => {
+    const response = await api.post('/facilities', data);
+    return response.data;
+  },
+  
+  update: async (id: string, data: Partial<Facility>): Promise<Facility> => {
+    const response = await api.put(`/facilities/${id}`, data);
+    return response.data;
+  },
+  
+  getStats: async (id: string): Promise<any> => {
+    const response = await api.get(`/facilities/${id}/stats`);
+    return response.data;
+  },
+
+  // Provider approval endpoints
+  getPendingProviders: async (facilityId?: string): Promise<User[]> => {
+    const url = facilityId ? `/facilities/pending/providers?facilityId=${facilityId}` : '/facilities/pending/providers';
+    const response = await api.get(url);
+    return response.data;
+  },
+
+  approveProvider: async (providerId: string): Promise<{ message: string; provider: User }> => {
+    const response = await api.post(`/facilities/providers/${providerId}/approve`);
+    return response.data;
+  },
+
+  rejectProvider: async (providerId: string, reason?: string): Promise<{ message: string; provider: User }> => {
+    const response = await api.post(`/facilities/providers/${providerId}/reject`, { reason });
+    return response.data;
+  },
+};
+
 // Admin API
 export const adminAPI = {
   getStats: async (): Promise<{
@@ -142,6 +210,21 @@ export const adminAPI = {
   
   getAllUsers: async (): Promise<User[]> => {
     const response = await api.get('/admin/users');
+    return response.data;
+  },
+
+  getAllFacilities: async (): Promise<Facility[]> => {
+    const response = await api.get('/admin/facilities');
+    return response.data;
+  },
+
+  approveFacility: async (id: string): Promise<{ message: string; facility: Facility }> => {
+    const response = await api.post(`/admin/facilities/${id}/approve`);
+    return response.data;
+  },
+
+  rejectFacility: async (id: string): Promise<{ message: string; facility: Facility }> => {
+    const response = await api.post(`/admin/facilities/${id}/reject`);
     return response.data;
   },
 };
@@ -193,47 +276,56 @@ export const medicinesAPI = {
   },
 };
 
-// Orders API
+// Orders API (new endpoints)
 export const ordersAPI = {
-  create: async (data: {
-    pharmacyId: string;
-    deliveryAddress: string;
-    items: Array<{ medicineId: string; quantity: number }>;
-    prescriptionId?: string;
-  }): Promise<Order> => {
+  create: async (data: { facilityId: string; items: Array<{ facilityMedicineId: string; quantity: number }>; prescriptionId?: string; notes?: string; }): Promise<Order> => {
+    // Backend expects facilityId + facilityMedicineId items
     const response = await api.post('/orders', data);
     return response.data;
   },
-  
-  getMyOrders: async (params?: { limit?: number; skip?: number }): Promise<OrdersResponse> => {
-    const queryParams = new URLSearchParams();
-    if (params?.limit) queryParams.append('limit', String(params.limit));
-    if (params?.skip) queryParams.append('skip', String(params.skip));
-    
-    const response = await api.get(`/orders/my-orders?${queryParams.toString()}`);
+  getMy: async (): Promise<Order[]> => {
+    const response = await api.get('/orders/my');
     return response.data;
   },
-  
+  getFacility: async (): Promise<Order[]> => {
+    const response = await api.get('/orders/facility');
+    return response.data;
+  },
+  // Added for pharmacy dashboard pages that still invoke getPharmacyOrders; maps to facility endpoint
+  getPharmacyOrders: async (_pharmacyId: string): Promise<Order[]> => {
+    const response = await api.get('/orders/facility');
+    return response.data;
+  },
   getById: async (id: string): Promise<Order> => {
     const response = await api.get(`/orders/${id}`);
     return response.data;
   },
-  
   cancel: async (id: string): Promise<Order> => {
     const response = await api.post(`/orders/${id}/cancel`);
     return response.data;
   },
-  
-  getPharmacyOrders: async (pharmacyId: string, status?: OrderStatus): Promise<Order[]> => {
-    const url = status 
-      ? `/orders/pharmacy/${pharmacyId}?status=${status}`
-      : `/orders/pharmacy/${pharmacyId}`;
-    const response = await api.get(url);
-    return response.data;
-  },
-  
   updateStatus: async (id: string, status: OrderStatus): Promise<Order> => {
     const response = await api.patch(`/orders/${id}/status`, { status });
+    return response.data;
+  },
+};
+
+// Prescriptions API
+export const prescriptionsAPI = {
+  list: async (): Promise<any[]> => {
+    const response = await api.get('/prescriptions');
+    return response.data;
+  },
+  create: async (data: { patientId: string; facilityId: string; diagnosis?: string; notes?: string; medicines?: any[] }): Promise<any> => {
+    const response = await api.post('/prescriptions', data);
+    return response.data;
+  },
+  getById: async (id: string): Promise<any> => {
+    const response = await api.get(`/prescriptions/${id}`);
+    return response.data;
+  },
+  updateStatus: async (id: string, status: string): Promise<any> => {
+    const response = await api.patch(`/prescriptions/${id}/status`, { status });
     return response.data;
   },
 };
@@ -395,8 +487,8 @@ export const notificationsAPI = {
 
 // Facility Medicines API
 export const facilityMedicinesAPI = {
-  uploadCSV: async (csvData: string, facilityName: string): Promise<{ message: string; count: number }> => {
-    const response = await api.post('/facility-medicines/upload', { csvData, facilityName });
+  uploadCSV: async (csvData: string): Promise<{ message: string; count: number }> => {
+    const response = await api.post('/facility-medicines/upload', { csvData });
     return response.data;
   },
   

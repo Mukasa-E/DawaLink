@@ -188,13 +188,13 @@ export default function OrderTracking() {
               <dt className="text-sm text-gray-600">Payment Status</dt>
               <dd>
                 <span className={`badge ${
-                  order.paymentStatus === 'paid' 
+                  (order.paymentStatus || 'pending') === 'paid' 
                     ? 'bg-green-100 text-green-800'
-                    : order.paymentStatus === 'pending'
+                    : (order.paymentStatus || 'pending') === 'pending'
                     ? 'bg-yellow-100 text-yellow-800'
                     : 'bg-red-100 text-red-800'
                 }`}>
-                  {order.paymentStatus.toUpperCase()}
+                  {(order.paymentStatus || 'pending').toUpperCase()}
                 </span>
               </dd>
             </div>

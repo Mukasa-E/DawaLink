@@ -1,4 +1,4 @@
-export type UserRole = 'patient' | 'healthcare_provider' | 'admin' | 'customer' | 'pharmacy' | 'delivery_agent';
+export type UserRole = 'patient' | 'healthcare_provider' | 'facility_admin' | 'admin' | 'customer' | 'pharmacy' | 'delivery_agent';
 
 export interface User {
   id: string;
@@ -7,27 +7,59 @@ export interface User {
   role: UserRole;
   phone?: string;
   facility?: string;
+  facilityId?: string; // For facility_admin users
   department?: string;
   preferredFacility?: string; // Patient's preferred/trusted facility
+  specialization?: string; // For healthcare providers
+  licenseNumber?: string; // For healthcare providers
+  isApproved?: boolean; // Approval status for healthcare providers
+  approvalStatus?: 'pending' | 'approved' | 'rejected'; // Detailed approval status
+  rejectionReason?: string; // Reason if rejected
   createdAt: string;
 }
 
 export interface Referral {
   id: string;
+  referralNumber: string;
+  qrCode?: string;
   patientId: string;
   patientName: string;
+  patientAge?: number;
+  patientGender?: string;
   providerId: string;
   providerName: string;
-  facilityName: string;
+  providerSpecialization?: string;
+  referringFacilityId: string;
+  receivingFacilityId?: string;
+  receivingProviderId?: string;
   reason: string;
+  clinicalSummary: string;
   diagnosis?: string;
+  vitalSigns?: any;
+  testResults?: any;
+  treatmentGiven?: string;
   recommendations?: string;
-  referringFacility: string;
-  referredToFacility: string;
+  urgencyLevel?: 'emergency' | 'urgent' | 'routine';
   status: 'pending' | 'accepted' | 'completed' | 'cancelled';
+  verifiedAt?: string;
+  expiresAt?: string;
   createdAt: string;
-  qrCode?: string;
-  notes?: string;
+  updatedAt?: string;
+  // Relations
+  referringFacility?: {
+    id: string;
+    name: string;
+    type: string;
+    city?: string;
+    address?: string;
+  };
+  receivingFacility?: {
+    id: string;
+    name: string;
+    type: string;
+    city?: string;
+    address?: string;
+  };
 }
 
 export interface MedicalRecord {
@@ -40,6 +72,7 @@ export interface MedicalRecord {
   title: string;
   description: string;
   date: string;
+  createdAt?: string;
   attachments?: string[];
   isAuthorized: boolean;
 }
@@ -59,9 +92,22 @@ export interface RegisterData {
   name: string;
   role: UserRole;
   phone?: string;
-  facility?: string;
+  facilityId?: string; // For healthcare providers - the facility they work at
   department?: string;
-  preferredFacility?: string; // Patient's preferred/trusted facility
+  preferredFacility?: string; // Patient's preferred/trusted facility (also a facilityId)
+  specialization?: string; // For healthcare providers
+  licenseNumber?: string; // For healthcare providers
+  // Facility registration fields (for facility_admin role)
+  facilityName?: string;
+  facilityType?: FacilityType;
+  registrationNumber?: string;
+  facilityPhone?: string;
+  facilityEmail?: string;
+  address?: string;
+  city?: string;
+  county?: string;
+  operatingHours?: string;
+  services?: string;
 }
 
 // Pharmacy Types
@@ -80,6 +126,36 @@ export interface Medicine {
   createdAt: string;
   updatedAt: string;
   pharmacy?: Pharmacy;
+}
+
+// Facility Types
+export type FacilityType = 'clinic' | 'pharmacy' | 'hospital' | 'health_center';
+
+export interface Facility {
+  id: string;
+  name: string;
+  type: FacilityType;
+  ownerId: string;
+  registrationNumber: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  county?: string;
+  operatingHours?: any; // { open: string, close: string, days: string[] }
+  services?: string[]; // Array of services offered
+  isVerified: boolean;
+  latitude?: number;
+  longitude?: number;
+  createdAt: string;
+  updatedAt: string;
+  owner?: User;
+  _count?: {
+    users: number;
+    referralsFrom: number;
+    referralsTo: number;
+    records: number;
+  };
 }
 
 // Facility Medicine Types (for hospitals/health facilities)
@@ -143,18 +219,25 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderNumber: string;
-  customerId: string;
-  pharmacyId: string;
+  // Pharmacy-centric fields
+  customerId?: string; // legacy front-end naming
+  pharmacyId?: string; // legacy front-end naming
+  pharmacy?: Pharmacy;
+  // Facility-centric (backend current model)
+  patientId?: string; // backend uses patient terminology
+  facilityId?: string;
+  facilityName?: string;
+  // Common order data
   status: OrderStatus;
-  paymentStatus: PaymentStatus;
+  paymentStatus?: PaymentStatus; // some backend responses may omit until payment initiated
   totalAmount: number;
-  deliveryAddress: string;
+  deliveryAddress?: string;
   prescriptionId?: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
-  customer?: User;
-  pharmacy?: Pharmacy;
-  items?: OrderItem[];
+  customer?: User; // legacy
+  items?: OrderItem[] | any[]; // facility medicine items may have different shape
   delivery?: DeliveryAssignment;
   payment?: Payment;
 }

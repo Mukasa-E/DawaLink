@@ -109,7 +109,12 @@ export const RecordDetails: React.FC = () => {
                   Date
                 </label>
                 <p className="text-gray-900 mt-2 font-semibold">
-                  {format(new Date(record.date), 'PPP')}
+                  {record.date 
+                    ? format(new Date(record.date), 'PPP')
+                    : record.createdAt
+                    ? format(new Date(record.createdAt), 'PPP')
+                    : 'Date not available'
+                  }
                 </p>
               </div>
               <div>
@@ -213,7 +218,12 @@ export const RecordDetails: React.FC = () => {
                     Date
                   </p>
                   <p className="text-gray-900">
-                    {format(new Date(record.date), 'PPP HH:mm')}
+                    {record.date 
+                      ? format(new Date(record.date), 'PPP HH:mm')
+                      : record.createdAt
+                      ? format(new Date(record.createdAt), 'PPP HH:mm')
+                      : 'Date not available'
+                    }
                   </p>
                 </div>
               </div>

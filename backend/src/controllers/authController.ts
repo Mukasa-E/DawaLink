@@ -7,15 +7,42 @@ import type { User, UserRole, AuthRequest } from '../types';
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, name, role, phone, facility, department, preferredFacility } = req.body;
+    const { 
+      email, 
+      password, 
+      name, 
+      role, 
+      phone, 
+      facilityId, 
+      specialization, 
+      licenseNumber,
+      // Facility registration fields
+      facilityName,
+      facilityType,
+      registrationNumber,
+      facilityPhone,
+      facilityEmail,
+      address,
+      city,
+      county,
+      operatingHours,
+      services
+    } = req.body;
 
     // Validation
     if (!email || !password || !name || !role) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    if (!['patient', 'healthcare_provider', 'admin'].includes(role)) {
+    if (!['patient', 'healthcare_provider', 'facility_admin', 'admin'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    // If facility_admin, validate facility fields
+    if (role === 'facility_admin') {
+      if (!facilityName || !facilityType || !registrationNumber || !facilityPhone || !facilityEmail || !address || !city) {
+        return res.status(400).json({ message: 'Missing required facility fields' });
+      }
     }
 
     // Check if user exists
@@ -27,54 +54,149 @@ export const register = async (req: Request, res: Response) => {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Create user
-    const id = uuidv4();
-    const createdAt = new Date().toISOString();
+    // Create user and facility in a transaction for facility_admin
+    if (role === 'facility_admin') {
+      const userId = uuidv4();
+      const facilityIdNew = uuidv4();
 
-    await prisma.user.create({
+      // Check if registration number already exists
+      const existingFacility = await (prisma as any).facility.findUnique({
+        where: { registrationNumber }
+      });
+
+      if (existingFacility) {
+        return res.status(400).json({ message: 'A facility with this registration number already exists' });
+      }
+
+      // Parse services if provided
+      const servicesArray = services 
+        ? services.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [];
+
+      // Create both user and facility in transaction
+      const result = await (prisma as any).$transaction(async (tx: any) => {
+        // Create facility first
+        const facility = await tx.facility.create({
+          data: {
+            id: facilityIdNew,
+            name: facilityName,
+            type: facilityType,
+            ownerId: userId,
+            registrationNumber,
+            phone: facilityPhone,
+            email: facilityEmail,
+            address,
+            city,
+            county: county || null,
+            operatingHours: operatingHours || null,
+            services: servicesArray,
+            isVerified: false, // Requires admin verification
+          }
+        });
+
+        // Create user
+        const user = await tx.user.create({
+          data: {
+            id: userId,
+            email,
+            name,
+            role: 'facility_admin',
+            phone: phone || null,
+            facilityId: facilityIdNew,
+            passwordHash,
+          },
+          select: { 
+            id: true, 
+            email: true, 
+            name: true, 
+            role: true, 
+            phone: true, 
+            facilityId: true,
+            createdAt: true,
+            updatedAt: true
+          },
+        });
+
+        return { user, facility };
+      });
+
+      // Generate token
+      const token = generateToken({ 
+        userId: result.user.id,
+        id: result.user.id, 
+        email: result.user.email, 
+        role: result.user.role as any,
+        facilityId: result.user.facilityId || undefined
+      });
+
+      return res.status(201).json({
+        user: result.user,
+        facility: result.facility,
+        token,
+        message: 'Facility registered successfully. Awaiting admin verification.'
+      });
+    }
+
+    // Regular user registration (non-facility_admin)
+    const id = uuidv4();
+
+    // For healthcare_provider with facilityId, require approval
+    const requiresApproval = role === 'healthcare_provider' && facilityId;
+    const approvalStatus = requiresApproval ? 'pending' : 'approved';
+    const isApproved = !requiresApproval;
+
+    const user = await (prisma.user.create as any)({
       data: {
         id,
         email,
         name,
         role,
         phone: phone || null,
-        facility: facility || null,
-        department: department || null,
-        preferredFacility: preferredFacility || null,
+        facilityId: facilityId || null,
+        specialization: specialization || null,
+        licenseNumber: licenseNumber || null,
+        isApproved,
+        approvalStatus,
+        requestedAt: requiresApproval ? new Date() : null,
         passwordHash,
-        createdAt: new Date(createdAt),
       },
-    });
-
-    const user = await prisma.user.findUnique({
-      where: { id },
       select: { 
         id: true, 
         email: true, 
         name: true, 
         role: true, 
         phone: true, 
-        facility: true, 
-        department: true,
-        preferredFacility: true,
-        createdAt: true 
+        facilityId: true, 
+        specialization: true,
+        licenseNumber: true,
+        isApproved: true,
+        approvalStatus: true,
+        createdAt: true,
+        updatedAt: true
       },
     });
 
-    if (!user) {
-      return res.status(500).json({ message: 'User creation failed' });
-    }
+    // Generate token with facilityId
+    const token = generateToken({ 
+      userId: user.id,
+      id: user.id, 
+      email: user.email, 
+      role: user.role as any,
+      facilityId: (user as any).facilityId || undefined
+    });
 
-    // Generate token
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const message = requiresApproval 
+      ? 'Registration successful. Your account is pending approval by the facility administrator.'
+      : undefined;
 
     res.status(201).json({
       user,
       token,
+      ...(message && { message })
     });
   } catch (error: any) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
 
@@ -99,8 +221,14 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate token
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    // Generate token with facilityId
+    const token = generateToken({ 
+      userId: user.id,
+      id: user.id, 
+      email: user.email, 
+      role: user.role as any,
+      facilityId: (user as any).facilityId || undefined
+    });
 
     // Return user without password
     const { passwordHash: _ph, ...userWithoutPassword } = user;
@@ -124,7 +252,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await (prisma.user.findUnique as any)({
       where: { id: userId },
       select: { 
         id: true, 
@@ -132,10 +260,14 @@ export const getCurrentUser = async (req: Request, res: Response) => {
         name: true, 
         role: true, 
         phone: true, 
-        facility: true, 
-        department: true,
-        preferredFacility: true,
-        createdAt: true 
+        facilityId: true, 
+        specialization: true,
+        licenseNumber: true,
+        isApproved: true,
+        approvalStatus: true,
+        rejectionReason: true,
+        createdAt: true,
+        updatedAt: true
       },
     });
 

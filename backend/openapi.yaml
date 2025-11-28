@@ -1,0 +1,385 @@
+openapi: 3.0.3
+info:
+  title: DawaLink API
+  version: 1.0.0
+  description: |
+    DawaLink Patient Referral & Medical Records Management System API.
+    Enables secure digital referrals, prescriptions, orders, and medical record management.
+  contact:
+    email: support@dawalink.co.ke
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://api.dawalink.co.ke/api
+    description: Production
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      description: Register patient, healthcare_provider, or facility_admin. Facility admins trigger facility creation.
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name, role]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                name: { type: string }
+                role: { type: string, enum: [patient, healthcare_provider, facility_admin, admin] }
+                facilityName: { type: string, description: "Required for facility_admin" }
+                facilityType: { type: string, enum: [clinic, pharmacy, hospital, health_center] }
+                registrationNumber: { type: string }
+                facilityPhone: { type: string }
+                facilityEmail: { type: string }
+                address: { type: string }
+                city: { type: string }
+                services: { type: string }
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+                  facility: { $ref: '#/components/schemas/Facility' }
+        '400': { description: Validation error }
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+  /facility-medicines:
+    post:
+      summary: Add facility medicine
+      tags: [Facility Medicines]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityMedicineInput'
+      responses:
+        '201': { description: Medicine created }
+        '403': { description: Forbidden }
+        '409': { description: Duplicate medicine name }
+  /facility-medicines/{facilityName}:
+    get:
+      summary: List medicines for facility
+      tags: [Facility Medicines]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: facilityName
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Medicine list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/FacilityMedicine' }
+  /prescriptions:
+    post:
+      summary: Create prescription
+      tags: [Prescriptions]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionInput'
+      responses:
+        '201':
+          description: Prescription created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Prescription' }
+    get:
+      summary: List prescriptions (role-filtered)
+      tags: [Prescriptions]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Prescription list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Prescription' }
+  /prescriptions/{id}/status:
+    patch:
+      summary: Update prescription status
+      tags: [Prescriptions]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [issued, fulfilled, cancelled, revoked] }
+      responses:
+        '200': { description: Status updated }
+  /orders:
+    post:
+      summary: Create order (patient)
+      tags: [Orders]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+  /orders/my:
+    get:
+      summary: List patient orders
+      tags: [Orders]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Order list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Order' }
+  /orders/facility:
+    get:
+      summary: List facility orders (facility_admin)
+      tags: [Orders]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Order list
+  /orders/{id}/status:
+    patch:
+      summary: Update order status
+      tags: [Orders]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [pending, confirmed, preparing, ready_for_pickup, out_for_delivery, delivered, cancelled] }
+      responses:
+        '200': { description: Status updated }
+  /referrals:
+    post:
+      summary: Create referral
+      tags: [Referrals]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferralInput'
+      responses:
+        '201':
+          description: Referral created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Referral' }
+    get:
+      summary: List referrals (role-filtered)
+      tags: [Referrals]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Referral list
+  /records:
+    post:
+      summary: Create medical record
+      tags: [Medical Records]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordInput'
+      responses:
+        '201':
+          description: Record created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalRecord' }
+    get:
+      summary: List medical records (role-filtered)
+      tags: [Medical Records]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Record list
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+        role: { type: string }
+        phone: { type: string }
+        facilityId: { type: string }
+    Facility:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        registrationNumber: { type: string }
+    FacilityMedicineInput:
+      type: object
+      required: [name, stock, price]
+      properties:
+        name: { type: string }
+        genericName: { type: string }
+        category: { type: string }
+        manufacturer: { type: string }
+        dosageForm: { type: string }
+        strength: { type: string }
+        stock: { type: integer }
+        reorderLevel: { type: integer }
+        requiresPrescription: { type: boolean }
+        price: { type: number }
+        notes: { type: string }
+    FacilityMedicine:
+      allOf:
+        - $ref: '#/components/schemas/FacilityMedicineInput'
+        - type: object
+          properties:
+            id: { type: string }
+            facilityName: { type: string }
+            createdAt: { type: string, format: date-time }
+    PrescriptionInput:
+      type: object
+      required: [patientId, facilityId]
+      properties:
+        patientId: { type: string }
+        facilityId: { type: string }
+        diagnosis: { type: string }
+        notes: { type: string }
+        medicines: { type: array, items: { type: object } }
+    Prescription:
+      type: object
+      properties:
+        id: { type: string }
+        prescriptionNumber: { type: string }
+        patientId: { type: string }
+        providerId: { type: string }
+        facilityId: { type: string }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+    OrderInput:
+      type: object
+      required: [facilityId, items]
+      properties:
+        facilityId: { type: string }
+        prescriptionId: { type: string }
+        items: { type: array, items: { type: object } }
+        notes: { type: string }
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        orderNumber: { type: string }
+        patientId: { type: string }
+        facilityId: { type: string }
+        totalAmount: { type: number }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+    ReferralInput:
+      type: object
+      required: [patientId, reason, clinicalSummary]
+      properties:
+        patientId: { type: string }
+        reason: { type: string }
+        clinicalSummary: { type: string }
+        diagnosis: { type: string }
+        urgencyLevel: { type: string, enum: [emergency, urgent, routine] }
+    Referral:
+      type: object
+      properties:
+        id: { type: string }
+        referralNumber: { type: string }
+        qrCode: { type: string }
+        patientId: { type: string }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+    RecordInput:
+      type: object
+      required: [patientId, recordType, title, description]
+      properties:
+        patientId: { type: string }
+        recordType: { type: string }
+        title: { type: string }
+        description: { type: string }
+        shareableViaQR: { type: boolean }
+    MedicalRecord:
+      type: object
+      properties:
+        id: { type: string }
+        recordNumber: { type: string }
+        patientId: { type: string }
+        recordType: { type: string }
+        title: { type: string }
+        qrCode: { type: string }
+        createdAt: { type: string, format: date-time }
+

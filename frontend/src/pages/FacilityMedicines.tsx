@@ -3,12 +3,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { facilityMedicinesAPI } from '../services/api';
 import { Upload, Plus, Search, Download, AlertCircle, Package, TrendingDown, X, Save } from 'lucide-react';
 import type { FacilityMedicine } from '../types';
-import { KENYAN_FACILITIES } from './CreateReferral';
 
 export const FacilityMedicines: React.FC = () => {
   const { user } = useAuth();
   const [medicines, setMedicines] = useState<FacilityMedicine[]>([]);
-  const [selectedFacility, setSelectedFacility] = useState<string>('');
+  const [facilityName, setFacilityName] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,19 +31,42 @@ export const FacilityMedicines: React.FC = () => {
     notes: '',
   });
 
-  // Set default facility for healthcare providers
+  // Load facility name and medicines on mount
   useEffect(() => {
-    if (user?.facility && user.role === 'healthcare_provider') {
-      setSelectedFacility(user.facility);
-    }
+    const loadFacilityAndMedicines = async () => {
+      // Allow both facility admins and healthcare providers
+      if (user?.role !== 'facility_admin' && user?.role !== 'healthcare_provider') {
+        setError('Only facility staff can view medicines');
+        return;
+      }
+
+      if (!user?.facilityId) {
+        setError('User is not associated with any facility');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        // Get facility details to get the name
+        const { facilitiesAPI } = await import('../services/api');
+        const facility = await facilitiesAPI.getById(user.facilityId);
+        setFacilityName(facility.name);
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to load facility');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFacilityAndMedicines();
   }, [user]);
 
-  // Load medicines when facility is selected
+  // Load medicines when facility name is available
   useEffect(() => {
-    if (selectedFacility) {
+    if (facilityName) {
       loadMedicines();
     }
-  }, [selectedFacility, lowStockOnly]);
+  }, [facilityName, lowStockOnly]);
 
   const loadMedicines = async () => {
     try {
@@ -53,9 +75,9 @@ export const FacilityMedicines: React.FC = () => {
       
       let data;
       if (lowStockOnly) {
-        data = await facilityMedicinesAPI.getLowStockMedicines(selectedFacility);
+        data = await facilityMedicinesAPI.getLowStockMedicines(facilityName);
       } else {
-        data = await facilityMedicinesAPI.getFacilityMedicines(selectedFacility, {
+        data = await facilityMedicinesAPI.getFacilityMedicines(facilityName, {
           search: searchQuery,
         });
       }
@@ -69,7 +91,7 @@ export const FacilityMedicines: React.FC = () => {
   };
 
   const handleSearch = () => {
-    if (selectedFacility) {
+    if (facilityName) {
       loadMedicines();
     }
   };
@@ -79,7 +101,7 @@ export const FacilityMedicines: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const result = await facilityMedicinesAPI.uploadCSV(csvData, selectedFacility);
+      const result = await facilityMedicinesAPI.uploadCSV(csvData);
       setSuccess(`Successfully uploaded ${result.count} medicines`);
       setShowUploadModal(false);
       setCsvData('');
@@ -127,10 +149,7 @@ export const FacilityMedicines: React.FC = () => {
         return;
       }
       
-      await facilityMedicinesAPI.addMedicine({
-        ...newMedicine,
-        facilityName: selectedFacility,
-      });
+      await facilityMedicinesAPI.addMedicine(newMedicine);
       
       setSuccess('Medicine added successfully');
       setShowAddModal(false);
@@ -190,26 +209,33 @@ Ciprofloxacin,Ciprofloxacin,Antibiotic,HealthPlus,Tablet,500mg,40,10,true,Fluoro
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
             Facility Medicines
           </h1>
-          <p className="text-gray-600 mt-2">Manage medicines available at healthcare facilities</p>
+          <p className="text-gray-600 mt-2">
+            {user?.role === 'facility_admin' 
+              ? 'Manage medicines available at your healthcare facility'
+              : 'View medicines available at your facility for prescribing'
+            }
+          </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setShowUploadModal(true)}
-            disabled={!selectedFacility}
-            className="btn-primary flex items-center space-x-2 px-4 py-2"
-          >
-            <Upload size={18} />
-            <span>Upload CSV</span>
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            disabled={!selectedFacility}
-            className="btn-secondary flex items-center space-x-2 px-4 py-2"
-          >
-            <Plus size={18} />
-            <span>Add Medicine</span>
-          </button>
-        </div>
+        {user?.role === 'facility_admin' && (
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              disabled={!facilityName}
+              className="btn-primary flex items-center space-x-2 px-4 py-2"
+            >
+              <Upload size={18} />
+              <span>Upload CSV</span>
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              disabled={!facilityName}
+              className="btn-secondary flex items-center space-x-2 px-4 py-2"
+            >
+              <Plus size={18} />
+              <span>Add Medicine</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Alerts */}
@@ -235,25 +261,18 @@ Ciprofloxacin,Ciprofloxacin,Antibiotic,HealthPlus,Tablet,500mg,40,10,true,Fluoro
 
       {/* Filters */}
       <div className="card border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Facility Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Facility Info */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Healthcare Facility *
+              Your Facility
             </label>
-            <select
-              value={selectedFacility}
-              onChange={(e) => setSelectedFacility(e.target.value)}
-              className="input-field"
-              disabled={user?.role === 'healthcare_provider' && !!user?.facility}
-            >
-              <option value="">Select a facility...</option>
-              {KENYAN_FACILITIES.map((facility) => (
-                <option key={facility} value={facility}>
-                  {facility}
-                </option>
-              ))}
-            </select>
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="font-semibold text-gray-900">{facilityName || 'Loading...'}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {user?.role === 'facility_admin' ? 'Facility Administrator' : 'Healthcare Provider'}
+              </p>
+            </div>
           </div>
 
           {/* Search */}
@@ -280,7 +299,7 @@ Ciprofloxacin,Ciprofloxacin,Antibiotic,HealthPlus,Tablet,500mg,40,10,true,Fluoro
           </div>
 
           {/* Filters */}
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Filters
             </label>
@@ -303,7 +322,7 @@ Ciprofloxacin,Ciprofloxacin,Antibiotic,HealthPlus,Tablet,500mg,40,10,true,Fluoro
       </div>
 
       {/* Stats Cards */}
-      {selectedFacility && (
+      {facilityName && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="card border border-gray-200">
             <div className="flex items-center space-x-3">
@@ -348,7 +367,7 @@ Ciprofloxacin,Ciprofloxacin,Antibiotic,HealthPlus,Tablet,500mg,40,10,true,Fluoro
       )}
 
       {/* Medicines Table */}
-      {selectedFacility && (
+      {facilityName && (
         <div className="card border border-gray-200">
           <div className="overflow-x-auto">
             {loading ? (
@@ -472,7 +491,7 @@ Ciprofloxacin,Ciprofloxacin,Antibiotic,HealthPlus,Tablet,500mg,40,10,true,Fluoro
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600 mb-2">
-                    Selected Facility: <span className="font-semibold text-gray-900">{selectedFacility}</span>
+                    Your Facility: <span className="font-semibold text-gray-900">{facilityName}</span>
                   </p>
                 </div>
 
@@ -548,7 +567,7 @@ Ciprofloxacin,Ciprofloxacin,Antibiotic,HealthPlus,Tablet,500mg,40,10,true,Fluoro
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600 mb-4">
-                    Facility: <span className="font-semibold text-gray-900">{selectedFacility}</span>
+                    Facility: <span className="font-semibold text-gray-900">{facilityName}</span>
                   </p>
                 </div>
 

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminAPI, referralsAPI, recordsAPI } from '../services/api';
-import { Users, FileText, Activity, Building2, TrendingUp, BarChart3 } from 'lucide-react';
+import { Users, FileText, Activity, Building2, TrendingUp, BarChart3, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import type { Referral, MedicalRecord } from '../types';
+import type { Referral, MedicalRecord, Facility } from '../types';
 
 interface AdminStats {
   totalUsers: number;
@@ -22,20 +22,23 @@ export const Admin: React.FC = () => {
   });
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'referrals' | 'records'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'referrals' | 'records' | 'facilities'>('overview');
 
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
-        const [statsData, referralsData, recordsData] = await Promise.all([
+        const [statsData, referralsData, recordsData, facilitiesData] = await Promise.all([
           adminAPI.getStats(),
           referralsAPI.getAll(),
           recordsAPI.getAll(),
+          adminAPI.getAllFacilities(),
         ]);
         setStats(statsData);
         setReferrals(referralsData);
         setRecords(recordsData);
+        setFacilities(facilitiesData);
       } catch (error) {
         console.error('Error fetching admin data:', error);
       } finally {
@@ -46,11 +49,45 @@ export const Admin: React.FC = () => {
     fetchAdminData();
   }, []);
 
+  const handleApproveFacility = async (id: string) => {
+    try {
+      await adminAPI.approveFacility(id);
+      // Refresh facilities list
+      const facilitiesData = await adminAPI.getAllFacilities();
+      setFacilities(facilitiesData);
+      alert('Facility approved successfully!');
+    } catch (error) {
+      console.error('Error approving facility:', error);
+      alert('Failed to approve facility');
+    }
+  };
+
+  const handleRejectFacility = async (id: string) => {
+    if (!confirm('Are you sure you want to revoke this facility\'s verification?')) {
+      return;
+    }
+    try {
+      await adminAPI.rejectFacility(id);
+      // Refresh facilities list
+      const facilitiesData = await adminAPI.getAllFacilities();
+      setFacilities(facilitiesData);
+      alert('Facility verification revoked');
+    } catch (error) {
+      console.error('Error rejecting facility:', error);
+      alert('Failed to reject facility');
+    }
+  };
+
   // Calculate metrics
   const referralStats = {
     pending: referrals.filter((r) => r.status === 'pending').length,
     completed: referrals.filter((r) => r.status === 'completed').length,
     accepted: referrals.filter((r) => r.status === 'accepted').length,
+  };
+
+  const facilityStats = {
+    pending: facilities.filter((f) => !f.isVerified).length,
+    approved: facilities.filter((f) => f.isVerified).length,
   };
 
   const recordTypes = records.reduce((acc, record) => {
@@ -173,6 +210,19 @@ export const Admin: React.FC = () => {
               <span>Records</span>
             </div>
           </button>
+          <button
+            onClick={() => setActiveTab('facilities')}
+            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'facilities'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              <Building2 size={20} />
+              <span>Facilities ({facilityStats.pending} pending)</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -260,7 +310,7 @@ export const Admin: React.FC = () => {
                   <tr key={referral.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 text-sm text-gray-900">{referral.patientName}</td>
                     <td className="py-3 px-4 text-sm text-gray-700">{referral.providerName}</td>
-                    <td className="py-3 px-4 text-sm text-gray-700">{referral.facilityName}</td>
+                    <td className="py-3 px-4 text-sm text-gray-700">{referral.referringFacility?.name || 'N/A'}</td>
                     <td className="py-3 px-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -311,12 +361,141 @@ export const Admin: React.FC = () => {
                     <td className="py-3 px-4 text-sm text-gray-700">{record.facilityName}</td>
                     <td className="py-3 px-4 text-sm text-gray-700">{record.providerName}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">
-                      {format(new Date(record.date), 'MMM dd, yyyy')}
+                      {record.date 
+                        ? format(new Date(record.date), 'MMM dd, yyyy')
+                        : record.createdAt
+                        ? format(new Date(record.createdAt), 'MMM dd, yyyy')
+                        : 'N/A'
+                      }
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'facilities' && (
+        <div className="space-y-6">
+          {/* Pending Facilities */}
+          {facilityStats.pending > 0 && (
+            <div className="card border border-yellow-200 bg-yellow-50">
+              <div className="flex items-center space-x-2 mb-4">
+                <Clock className="text-yellow-600" size={24} />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Pending Approval ({facilityStats.pending})
+                </h3>
+              </div>
+              <div className="space-y-4">
+                {facilities
+                  .filter((f) => !f.isVerified)
+                  .map((facility) => (
+                    <div key={facility.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <Building2 className="text-yellow-600" size={24} />
+                            <div>
+                              <h4 className="text-lg font-semibold text-gray-900">{facility.name}</h4>
+                              <p className="text-sm text-gray-600 capitalize">{facility.type}</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 mt-3">
+                            <div>
+                              <p className="text-xs text-gray-500">Registration Number</p>
+                              <p className="text-sm font-medium text-gray-900">{facility.registrationNumber}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Contact</p>
+                              <p className="text-sm font-medium text-gray-900">{facility.phone}</p>
+                              <p className="text-sm text-gray-600">{facility.email}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Location</p>
+                              <p className="text-sm font-medium text-gray-900">{facility.city}</p>
+                              <p className="text-sm text-gray-600">{facility.address}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Registered</p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {format(new Date(facility.createdAt), 'MMM dd, yyyy')}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col space-y-2 ml-4">
+                          <button
+                            onClick={() => handleApproveFacility(facility.id)}
+                            className="btn-primary flex items-center space-x-2 px-4 py-2"
+                          >
+                            <CheckCircle size={18} />
+                            <span>Approve</span>
+                          </button>
+                          <button
+                            onClick={() => handleRejectFacility(facility.id)}
+                            className="btn-secondary flex items-center space-x-2 px-4 py-2 text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <XCircle size={18} />
+                            <span>Reject</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Approved Facilities */}
+          <div className="card border border-gray-200">
+            <div className="flex items-center space-x-2 mb-4">
+              <CheckCircle className="text-green-600" size={24} />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Approved Facilities ({facilityStats.approved})
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Registration</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Location</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Contact</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {facilities
+                    .filter((f) => f.isVerified)
+                    .map((facility) => (
+                      <tr key={facility.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 text-sm font-medium text-gray-900">{facility.name}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700 capitalize">{facility.type}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700">{facility.registrationNumber}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700">{facility.city}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700">{facility.phone}</td>
+                        <td className="py-3 px-4">
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Verified
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleRejectFacility(facility.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Revoke
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

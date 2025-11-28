@@ -1,26 +1,32 @@
 import { Router } from 'express';
-import { 
-  createOrder, 
-  getCustomerOrders, 
-  getPharmacyOrders, 
-  getOrderById, 
-  updateOrderStatus, 
-  cancelOrder 
+import { authenticate } from '../middleware/auth';
+import {
+  createOrder,
+  getMyOrders,
+  getFacilityOrders,
+  getOrderById,
+  updateOrderStatus,
+  cancelOrder,
 } from '../controllers/ordersController';
-import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
-// Customer routes
-router.post('/', authenticate, authorize('customer', 'admin'), createOrder);
-router.get('/my-orders', authenticate, authorize('customer', 'admin'), getCustomerOrders);
-router.post('/:id/cancel', authenticate, authorize('customer', 'admin'), cancelOrder);
+// Patient creates order
+router.post('/', authenticate, createOrder);
 
-// Pharmacy routes
-router.get('/pharmacy/:pharmacyId', authenticate, authorize('pharmacy', 'admin'), getPharmacyOrders);
-router.patch('/:id/status', authenticate, authorize('pharmacy', 'admin'), updateOrderStatus);
+// Patient lists own orders
+router.get('/my', authenticate, getMyOrders);
 
-// Shared routes (customer, pharmacy, delivery, admin)
+// Patient cancels own order
+router.post('/:id/cancel', authenticate, cancelOrder);
+
+// Facility admin lists facility orders
+router.get('/facility', authenticate, getFacilityOrders);
+
+// Facility admin updates status
+router.patch('/:id/status', authenticate, updateOrderStatus);
+
+// Get single order (access controlled in controller)
 router.get('/:id', authenticate, getOrderById);
 
 export default router;

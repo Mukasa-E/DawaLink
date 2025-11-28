@@ -9,7 +9,11 @@
     "start": "node dist/index.js",
     "migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "smoke:phase1": "tsx src/scripts/smokePhase1.ts",
+    "test": "jest --runInBand",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
   },
   "keywords": [
     "healthcare",
@@ -19,24 +23,36 @@
   "author": "Zamadi Tech",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^5.19.0",
+    "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^6.11.2",
+    "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^9.0.1",
+    "xss": "^1.0.14",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.11",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.5",
+    "@types/supertest": "^2.0.16",
     "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "prettier": "^3.6.2",
     "prisma": "^5.19.0",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }

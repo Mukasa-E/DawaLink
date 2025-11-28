@@ -2,9 +2,11 @@ import jwt from 'jsonwebtoken';
 import type { UserRole } from '../types';
 
 export interface JWTPayload {
+  userId?: string;
   id: string;
   email: string;
   role: UserRole;
+  facilityId?: string;
 }
 
 export function generateToken(payload: JWTPayload): string {

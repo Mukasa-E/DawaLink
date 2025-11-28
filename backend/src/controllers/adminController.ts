@@ -15,7 +15,7 @@ export const getStats = async (req: Request, res: Response) => {
       prisma.user.count(),
       prisma.referral.count(),
       prisma.medicalRecord.count(),
-      prisma.user.count({ where: { facility: { not: null } } }),
+      prisma.facility.count(),
     ]);
 
     res.json({
@@ -87,10 +87,10 @@ export const exportRecordsCSV = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const records = await prisma.medicalRecord.findMany({ orderBy: { date: 'desc' } as any });
+  const records = await prisma.medicalRecord.findMany({ orderBy: { visitDate: 'desc' } });
 
-    const header = ['id', 'patientId', 'providerId', 'providerName', 'facilityName', 'recordType', 'title', 'date'];
-    const rows = records.map((r: any) => [r.id, r.patientId, r.providerId, r.providerName, r.facilityName, r.recordType, (r.title || '').replace(/\n/g, ' '), r.date.toISOString()]);
+  const header = ['id', 'patientId', 'providerId', 'providerName', 'facilityName', 'recordType', 'title', 'visitDate'];
+  const rows = records.map((r: any) => [r.id, r.patientId, r.providerId, r.providerName, r.facilityName, r.recordType, (r.title || '').replace(/\n/g, ' '), r.visitDate.toISOString()]);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="records.csv"');
@@ -106,3 +106,99 @@ export const exportRecordsCSV = async (req: Request, res: Response) => {
   }
 };
 
+// Get all facilities (including pending approval)
+export const getAllFacilities = async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const role = authReq.user?.role;
+
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const facilities = await prisma.facility.findMany({
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(facilities);
+  } catch (error: any) {
+    console.error('Get facilities error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Approve a facility
+export const approveFacility = async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const role = authReq.user?.role;
+
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { id } = req.params;
+
+    const facility = await prisma.facility.update({
+      where: { id },
+      data: { isVerified: true },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json({ message: 'Facility approved successfully', facility });
+  } catch (error: any) {
+    console.error('Approve facility error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Reject/Revoke facility approval
+export const rejectFacility = async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const role = authReq.user?.role;
+
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { id } = req.params;
+
+    const facility = await prisma.facility.update({
+      where: { id },
+      data: { isVerified: false },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json({ message: 'Facility verification revoked', facility });
+  } catch (error: any) {
+    console.error('Reject facility error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

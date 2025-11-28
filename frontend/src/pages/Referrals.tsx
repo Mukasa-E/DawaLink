@@ -36,7 +36,8 @@ export const Referrals: React.FC = () => {
     const matchesSearch =
       referral.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       referral.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      referral.facilityName.toLowerCase().includes(searchQuery.toLowerCase());
+      referral.referringFacility?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      referral.receivingFacility?.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesFilter =
       filterStatus === 'all' || referral.status === filterStatus;
@@ -164,11 +165,11 @@ export const Referrals: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600 font-medium">From</p>
-                      <p className="text-gray-900 mt-0.5">{referral.referringFacility}</p>
+                      <p className="text-gray-900 mt-0.5">{referral.referringFacility?.name || 'Not specified'}</p>
                     </div>
                     <div>
                       <p className="text-gray-600 font-medium">To</p>
-                      <p className="text-gray-900 mt-0.5">{referral.referredToFacility}</p>
+                      <p className="text-gray-900 mt-0.5">{referral.receivingFacility?.name || 'General referral'}</p>
                     </div>
                     <div>
                       <p className="text-gray-600 font-medium">Date</p>

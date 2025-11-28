@@ -162,7 +162,14 @@ export const Records: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-1 text-gray-600">
                       <span className="font-medium">Date:</span>
-                      <span>{format(new Date(record.date), 'MMM dd, yyyy')}</span>
+                      <span>
+                        {record.date 
+                          ? format(new Date(record.date), 'MMM dd, yyyy')
+                          : record.createdAt
+                          ? format(new Date(record.createdAt), 'MMM dd, yyyy')
+                          : 'N/A'
+                        }
+                      </span>
                     </div>
                   </div>
                 </div>

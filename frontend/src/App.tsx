@@ -16,15 +16,15 @@ import { Patients } from './pages/Patients';
 import { PatientDetails } from './pages/PatientDetails';
 import { Admin } from './pages/Admin';
 import { FacilityMedicines } from './pages/FacilityMedicines';
-import MedicineSearch from './pages/MedicineSearch';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import OrderTracking from './pages/OrderTracking';
-import PharmacyDashboard from './pages/PharmacyDashboard';
-import PharmacyInventory from './pages/PharmacyInventory';
-import PharmacyOrders from './pages/PharmacyOrders';
-import DeliveryDashboard from './pages/DeliveryDashboard';
-import DeliveryAssignments from './pages/DeliveryAssignments';
+import SearchFacilities from './pages/SearchFacilities';
+import FacilityDashboard from './pages/FacilityDashboard';
+import ManageFacility from './pages/ManageFacility';
+import PrescriptionsList from './pages/PrescriptionsList.tsx';
+import PrescriptionCreate from './pages/PrescriptionCreate.tsx';
+import OrdersList from './pages/OrdersList.tsx';
+import FacilityOrders from './pages/FacilityOrders.tsx';
+import OrderDetails from './pages/OrderDetails.tsx';
+import { PendingProviders } from './pages/PendingProviders';
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -163,41 +163,49 @@ const AppRoutes: React.FC = () => {
       <Route
         path="/facility-medicines"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'healthcare_provider']}>
+          <ProtectedRoute allowedRoles={['admin', 'healthcare_provider', 'facility_admin']}>
             <Layout>
               <FacilityMedicines />
             </Layout>
           </ProtectedRoute>
         }
       />
-
-      {/* Pharmacy routes */}
       <Route
-        path="/medicines"
+        path="/prescriptions"
         element={
           <ProtectedRoute>
             <Layout>
-              <MedicineSearch />
+              <PrescriptionsList />
             </Layout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/cart"
+        path="/prescriptions/create"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['healthcare_provider','facility_admin']}>
             <Layout>
-              <Cart />
+              <PrescriptionCreate />
             </Layout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/checkout"
+        path="/orders"
         element={
-          <ProtectedRoute allowedRoles={['customer', 'admin']}>
+          <ProtectedRoute allowedRoles={['patient','admin','healthcare_provider']}>
             <Layout>
-              <Checkout />
+              <OrdersList />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders/facility"
+        element={
+          <ProtectedRoute allowedRoles={['facility_admin']}>
+            <Layout>
+              <FacilityOrders />
             </Layout>
           </ProtectedRoute>
         }
@@ -207,59 +215,37 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <Layout>
-              <OrderTracking />
+              <OrderDetails />
             </Layout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/pharmacy/dashboard"
+        path="/facilities"
         element={
-          <ProtectedRoute allowedRoles={['pharmacy', 'admin']}>
+          <ProtectedRoute>
             <Layout>
-              <PharmacyDashboard />
+              <SearchFacilities />
             </Layout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/pharmacy/inventory"
+        path="/my-facility"
         element={
-          <ProtectedRoute allowedRoles={['pharmacy', 'admin']}>
+          <ProtectedRoute allowedRoles={['facility_admin']}>
             <Layout>
-              <PharmacyInventory />
+              <ManageFacility />
             </Layout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/pharmacy/orders"
+        path="/pending-providers"
         element={
-          <ProtectedRoute allowedRoles={['pharmacy', 'admin']}>
+          <ProtectedRoute allowedRoles={['facility_admin', 'admin']}>
             <Layout>
-              <PharmacyOrders />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Delivery routes */}
-      <Route
-        path="/delivery/dashboard"
-        element={
-          <ProtectedRoute allowedRoles={['delivery_agent', 'admin']}>
-            <Layout>
-              <DeliveryDashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/delivery/assignments"
-        element={
-          <ProtectedRoute allowedRoles={['delivery_agent', 'admin']}>
-            <Layout>
-              <DeliveryAssignments />
+              <PendingProviders />
             </Layout>
           </ProtectedRoute>
         }

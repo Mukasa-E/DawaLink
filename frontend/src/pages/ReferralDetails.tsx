@@ -198,14 +198,6 @@ export const ReferralDetails: React.FC = () => {
                   <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">{referral.recommendations}</p>
                 </div>
               )}
-              {referral.notes && (
-                <div>
-                  <label className="text-sm font-medium text-gray-600 uppercase tracking-wide block mb-2">
-                    Additional Notes
-                  </label>
-                  <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">{referral.notes}</p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -225,13 +217,19 @@ export const ReferralDetails: React.FC = () => {
                 <label className="text-sm font-medium text-gray-600 uppercase tracking-wide">
                   Referring Facility
                 </label>
-                <p className="text-gray-900 mt-2 font-semibold">{referral.referringFacility}</p>
+                <p className="text-gray-900 mt-2 font-semibold">{referral.referringFacility?.name || 'Not specified'}</p>
+                {referral.referringFacility?.city && (
+                  <p className="text-sm text-gray-600 mt-1">{referral.referringFacility.city}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600 uppercase tracking-wide">
                   Referred To Facility
                 </label>
-                <p className="text-gray-900 mt-2 font-semibold">{referral.referredToFacility}</p>
+                <p className="text-gray-900 mt-2 font-semibold">{referral.receivingFacility?.name || 'General referral'}</p>
+                {referral.receivingFacility?.city && (
+                  <p className="text-sm text-gray-600 mt-1">{referral.receivingFacility.city}</p>
+                )}
               </div>
             </div>
           </div>

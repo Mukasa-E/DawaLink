@@ -72,7 +72,7 @@
     "prescription": "Dawa",
     "diagnosis": "Uchunguzi",
     "other": "Nyingine",
-    "title": "Kichwa",
+    "recordTitle": "Kichwa",
     "description": "Maelezo",
     "date": "Tarehe",
     "provider": "Mtaalamu wa Afya",
@@ -96,6 +96,32 @@
     "totalReferrals": "Jumla ya Rujia",
     "totalRecords": "Jumla ya Rekodi",
     "activeFacilities": "Vituo Vinavyofanya Kazi"
+  },
+  "facilities": {
+    "title": "Tafuta Vituo",
+    "search": {
+      "title": "Tafuta Vituo vya Afya",
+      "subtitle": "Tafuta kliniki, maduka ya dawa, na hospitali karibu nawe",
+      "searchLabel": "Tafuta kwa jina, anwani, au mji",
+      "placeholder": "Tafuta vituo...",
+      "button": "Tafuta",
+      "typeLabel": "Aina ya Kituo",
+      "cityLabel": "Mji",
+      "allTypes": "Aina Zote",
+      "allCities": "Miji Yote",
+      "verifiedOnly": "Vituo vilivyothibitishwa tu",
+      "loading": "Inapakia vituo...",
+      "results": "Imepatikana vituo {{count}}",
+      "noResults": "Hakuna vituo vilivyopatikana",
+      "noResultsMessage": "Jaribu kurekebisha vigezo vya utafutaji"
+    },
+    "types": {
+      "hospital": "Hospitali",
+      "clinic": "Kliniki",
+      "pharmacy": "Duka la Dawa",
+      "health_center": "Kituo cha Afya"
+    },
+    "services": "Huduma"
   }
 }
 
