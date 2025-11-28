@@ -163,6 +163,18 @@ docker compose up --build
 **Live Backend**: https://dawalink.onrender.com
 **Health Check**: https://dawalink.onrender.com/health
 
+## Documentation
+
+For detailed, component-specific setup and developer notes see the per-subproject READMEs and supporting docs:
+
+- Backend README: `backend/README.md` — detailed backend setup, env variables, Prisma, and scripts
+- Frontend README: `frontend/README.md` — frontend dev server, build, environment variables, and tech stack
+- System Requirements Spec (SRS): `SRS_DOCUMENT.md` — full requirements, actors, use cases, and data model
+- Video Script: `VIDEO_SCRIPT.md` — recommended recording script & demo flow for the summative
+- Submission Checklist: `SUBMISSION_CHECKLIST.md` — final checklist for submitting your summative
+
+If you are developing locally, start by following the per-folder README (backend or frontend) for the most precise instructions.
+
 ### Environment Files
 Templates:
 - Backend: `backend/.env.example`

@@ -101,6 +101,8 @@ model Referral {
   receivedBy         String?  // Name of provider who received referral
   receivedAt         DateTime?
   completionNotes    String?
+  completedAt        DateTime?
+  completedBy        String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   expiresAt          DateTime? // Optional expiry for referral validity
