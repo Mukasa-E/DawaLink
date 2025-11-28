@@ -21,6 +21,15 @@ import { errorHandler } from './middleware/errorHandler';
 export function buildApp() {
   const app = express();
 
+  // If the app is running behind a proxy (Render, Vercel, Heroku, etc.) the
+  // reverse proxy sets X-Forwarded-* headers. express-rate-limit validates
+  // X-Forwarded-For when generating keys; to avoid the ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+  // error we must enable `trust proxy` appropriately. Use the TRUST_PROXY
+  // env var if provided, otherwise default to '1' (one trusted hop).
+  // Accept values like '1', 'true', or a comma-separated list per Express docs.
+  const trustProxy = process.env.TRUST_PROXY ?? '1';
+  app.set('trust proxy', trustProxy as any);
+
   // Read allowed origin(s) from env. Support a comma-separated list.
   // Normalize by trimming whitespace and removing any trailing slash so
   // configuration like "https://dawa-link.vercel.app/" still matches
