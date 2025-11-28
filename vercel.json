@@ -1,12 +1,7 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm ci",
+  "buildCommand": "cd frontend && npm run build",
+  "installCommand": "cd frontend && npm ci",
   "framework": "vite",
-  "roots": [
-    {
-      "path": "frontend"
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
