@@ -30,15 +30,38 @@ export function buildApp() {
     .split(',')
     .map(s => s.trim().replace(/\/$/, ''))
     .filter(Boolean);
+  // Build an array of regexes to allow Vercel preview domains derived from
+  // configured vercel.host entries. Example: if configured origin is
+  // https://dawa-link.vercel.app we will allow
+  // https://dawa-link-*.vercel.app preview domains as well.
+  const allowedRegexes = allowedOrigins
+    .map(o => {
+      try {
+        const u = new URL(o);
+        const host = u.hostname;
+        if (host.endsWith('.vercel.app')) {
+          const base = host.replace(/\.vercel\.app$/, '');
+          const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          return new RegExp(`^https://${esc}(-[a-z0-9-]+)?\\.vercel\\.app$`);
+        }
+      } catch (e) {
+        // ignore invalid URL entries
+      }
+      return null;
+    })
+    .filter(Boolean) as RegExp[];
 
   app.use(cors({
     origin: (origin, callback) => {
-      // If no origin (e.g. curl, server-to-server), allow the request
+      // Allow non-browser requests (no Origin header)
       if (!origin) return callback(null, true);
       const normalized = origin.replace(/\/$/, '');
-      if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(normalized)) {
-        return callback(null, true);
-      }
+      // Allow in non-production for convenience
+      if (process.env.NODE_ENV !== 'production') return callback(null, true);
+      // Exact match against configured origins
+      if (allowedOrigins.includes(normalized)) return callback(null, true);
+      // Allow matches against derived regexes (Vercel preview domains)
+      if (allowedRegexes.some(r => r.test(normalized))) return callback(null, true);
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
     credentials: true,
