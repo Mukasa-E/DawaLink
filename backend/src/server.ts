@@ -122,7 +122,13 @@ export function buildApp() {
   app.use('/api/admin', adminRoutes);
   app.use('/api/notifications', notificationsRoutes);
 
+  // Log 404s with method and URL to help debug missing routes in production
   app.use((req, res) => {
+    // Keep logging lightweight to avoid excessive IO in high-traffic apps
+    // Timestamp, method, url and optional referrer will help trace client errors
+    // into Render logs.
+    // eslint-disable-next-line no-console
+    console.warn(`[404] ${new Date().toISOString()} ${req.method} ${req.originalUrl} - Referrer: ${req.get('referer') || '-'} - Origin: ${req.get('origin') || '-'} `);
     res.status(404).json({ message: 'Route not found' });
   });
   app.use(errorHandler);
