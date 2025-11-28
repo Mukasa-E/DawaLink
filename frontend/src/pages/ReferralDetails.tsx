@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { referralsAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, Download, QrCode, FileText, User, Building2, Clock, CheckCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { Referral } from '../types';
@@ -15,6 +16,7 @@ export const ReferralDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const qrCodeRef = React.useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchReferral = async () => {
@@ -123,6 +125,32 @@ export const ReferralDetails: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Action buttons */}
+          {user && (user.role === 'facility_admin' || user.role === 'healthcare_provider') && (
+            // Only show complete if provider/admin belongs to receiving facility or is facility admin
+            (user.role === 'facility_admin' || referral.receivingFacilityId === user.facilityId) && (
+              <div className="flex items-center justify-end">
+                {referral.status !== 'completed' && (
+                  <button
+                    onClick={async () => {
+                      const notes = window.prompt('Optional completion notes (leave blank if none):') || undefined;
+                      try {
+                        const updated = await referralsAPI.update(referral.id, { status: 'completed', completionNotes: notes } as any);
+                        setReferral(updated);
+                        alert('Referral marked completed');
+                      } catch (err) {
+                        console.error('Error completing referral', err);
+                        alert('Failed to mark referral completed');
+                      }
+                    }}
+                    className="btn-primary px-4 py-2"
+                  >
+                    Mark Completed
+                  </button>
+                )}
+              </div>
+            )
+          )}
           {/* Patient Information */}
           <div className="card border border-gray-200">
             <div className="flex items-center space-x-3 mb-6 pb-4 border-b border-gray-100">
