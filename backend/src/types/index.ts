@@ -158,6 +158,7 @@ export interface AuthRequest extends Request {
     email: string;
     role: UserRole;
     facilityId?: string;
+    name?: string;
   };
 }
 
