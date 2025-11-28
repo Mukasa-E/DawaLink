@@ -2,10 +2,6 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "framework": "vite",
-  "projectSettings": {
-    "framework": "@vitejs/app",
-    "nodejs": "22.x"
-  },
   "roots": [
     {
       "path": "frontend"
@@ -16,8 +12,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "env": {
-    "VITE_API_BASE_URL": "@vite-api-base-url"
-  }
+  ]
 }
