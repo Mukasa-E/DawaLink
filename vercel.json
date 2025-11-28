@@ -1,1 +1,4 @@
-{}
+{
+  "monorepo": true,
+  "monorepoRoot": "frontend"
+}
