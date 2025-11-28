@@ -86,6 +86,21 @@ export function buildApp() {
     res.json({ status: 'ok', message: 'DawaLink Patient Referral & Records System API is running' });
   });
 
+  // Debug endpoint to inspect CORS configuration and request origin.
+  // Useful when troubleshooting production preview domains. Returns the
+  // normalized configured origins, the derived preview regexes, and the
+  // incoming request Origin header. Keep lightweight and informational.
+  app.get('/debug/cors', (req, res) => {
+    const info = {
+      envCorsRaw: rawCors,
+      allowedOrigins,
+      allowedRegexes: allowedRegexes.map(r => r.source),
+      requestOrigin: req.headers.origin || null,
+      nodeEnv: process.env.NODE_ENV || null,
+    };
+    res.json(info);
+  });
+
   app.use('/api/auth', authRoutes);
   app.use('/api/referrals', referralsRoutes);
   app.use('/api/records', recordsRoutes);
