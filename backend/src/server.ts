@@ -21,9 +21,26 @@ import { errorHandler } from './middleware/errorHandler';
 export function buildApp() {
   const app = express();
 
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+  // Read allowed origin(s) from env. Support a comma-separated list.
+  // Normalize by trimming whitespace and removing any trailing slash so
+  // configuration like "https://dawa-link.vercel.app/" still matches
+  // the actual request origin "https://dawa-link.vercel.app".
+  const rawCors = process.env.CORS_ORIGIN || 'http://localhost:5173';
+  const allowedOrigins = rawCors
+    .split(',')
+    .map(s => s.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+
   app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? corsOrigin : true,
+    origin: (origin, callback) => {
+      // If no origin (e.g. curl, server-to-server), allow the request
+      if (!origin) return callback(null, true);
+      const normalized = origin.replace(/\/$/, '');
+      if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(normalized)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
   }));
   app.use(helmet());
